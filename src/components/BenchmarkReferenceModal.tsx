@@ -6,60 +6,27 @@ import {
   Check, 
   TrendingUp, 
   ArrowUpRight,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  Target
 } from 'lucide-react';
 import { INDUSTRY_BENCHMARKS } from '../data/benchmarks';
-import { FunnelInputs } from '../types';
-import { formatCurrency } from '../utils/calculations';
+import { AD_PLATFORMS, getPlatform } from '../data/platforms';
+import { FunnelInputs, PlatformId } from '../types';
+import { formatCurrency, formatPercent } from '../utils/calculations';
 
 interface BenchmarkReferenceModalProps {
   onSelectIndustry: (benchmarkId: string) => void;
+  onSelectPlatform?: (platformId: PlatformId) => void;
   onClose: () => void;
 }
 
 export const BenchmarkReferenceModal: React.FC<BenchmarkReferenceModalProps> = ({
   onSelectIndustry,
+  onSelectPlatform,
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'industries' | 'channels'>('industries');
-
-  const channelBenchmarks = [
-    {
-      channel: 'Google Search Ads',
-      intent: 'Highest Intent (Active Search)',
-      cpcRange: '$2.50 – $12.00+',
-      lpCvrRange: '5.0% – 12.0%',
-      bestFor: 'High-intent lead generation, emergency services, B2B software, professional services.',
-    },
-    {
-      channel: 'Meta Ads (Facebook & Instagram)',
-      intent: 'High Visual / Latent Demand',
-      cpcRange: '$0.80 – $3.50',
-      lpCvrRange: '7.0% – 16.0%',
-      bestFor: 'E-commerce, local clinics, high-ticket coaching, real estate, direct lead forms.',
-    },
-    {
-      channel: 'LinkedIn Ads',
-      intent: 'Targeted ICP Decision Makers',
-      cpcRange: '$6.00 – $18.00',
-      lpCvrRange: '4.0% – 9.0%',
-      bestFor: 'Enterprise B2B, HR/Finance tools, ABM (Account-Based Marketing), C-suite targeting.',
-    },
-    {
-      channel: 'Google Performance Max & Shopping',
-      intent: 'Commercial High Intent',
-      cpcRange: '$0.60 – $2.20',
-      lpCvrRange: '2.5% – 5.5%',
-      bestFor: 'E-commerce physical catalogs, high SKU stores, multi-channel automated bidding.',
-    },
-    {
-      channel: 'YouTube Ads',
-      intent: 'Top of Funnel Video Storytelling',
-      cpcRange: '$0.10 – $0.40 (CPV)',
-      lpCvrRange: '1.5% – 4.5%',
-      bestFor: 'Brand authority, problem-aware demonstration, founder-led stories.',
-    },
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
@@ -74,7 +41,7 @@ export const BenchmarkReferenceModal: React.FC<BenchmarkReferenceModalProps> = (
             <div>
               <h2 className="text-base font-bold text-white">Paid Media Benchmark Reference Sheet</h2>
               <p className="text-xs text-slate-400">
-                Industry standards to justify conversion rates and realistic unit costs during sales calls
+                Industry & 6-Network authentic benchmarks to justify conversion rates and unit economics
               </p>
             </div>
           </div>
@@ -98,7 +65,7 @@ export const BenchmarkReferenceModal: React.FC<BenchmarkReferenceModalProps> = (
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            By Industry Verticals
+            By Industry Verticals ({INDUSTRY_BENCHMARKS.length})
           </button>
           <button
             type="button"
@@ -109,7 +76,7 @@ export const BenchmarkReferenceModal: React.FC<BenchmarkReferenceModalProps> = (
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            By Paid Ad Platform
+            By 6 Major Ad Networks ({AD_PLATFORMS.length})
           </button>
         </div>
 
@@ -186,26 +153,92 @@ export const BenchmarkReferenceModal: React.FC<BenchmarkReferenceModalProps> = (
               ))}
             </div>
           ) : (
-            <div className="space-y-3">
-              {channelBenchmarks.map((chan, idx) => (
+            <div className="space-y-4">
+              {AD_PLATFORMS.map((plat) => (
                 <div
-                  key={idx}
-                  className="p-4 rounded-xl bg-slate-50 border border-slate-200"
+                  key={plat.id}
+                  className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
-                    <h4 className="text-sm font-bold text-slate-900">{chan.channel}</h4>
-                    <span className="text-[11px] font-semibold text-slate-500">{chan.intent}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">{chan.bestFor}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="w-3 h-3 rounded-full shrink-0" 
+                        style={{ backgroundColor: plat.brandColor }}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-slate-900">{plat.name}</h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                            {plat.audienceIntent}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">{plat.tagline}</p>
+                      </div>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded-lg border border-slate-200 text-xs">
+                    {onSelectPlatform && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectPlatform(plat.id);
+                          onClose();
+                        }}
+                        className="px-3 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors self-start sm:self-auto cursor-pointer flex items-center gap-1"
+                      >
+                        <Zap className="w-3 h-3" />
+                        <span>Load Platform</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Benchmark Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white p-3 rounded-lg border border-slate-200 text-xs mt-2">
                     <div>
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Expected CPC</span>
-                      <div className="font-mono font-bold text-slate-900 mt-0.5">{chan.cpcRange}</div>
+                      <div className="text-[10px] text-slate-400 font-semibold">Typical CPC</div>
+                      <div className="font-mono font-bold text-slate-900 mt-0.5">
+                        ${plat.benchmarks.cpc.low.toFixed(2)} – ${plat.benchmarks.cpc.high.toFixed(2)}
+                      </div>
+                      <div className="text-[10px] text-blue-600 font-semibold">(Avg: ${plat.benchmarks.cpc.avg.toFixed(2)})</div>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Typical Landing Page CVR</span>
-                      <div className="font-mono font-bold text-slate-900 mt-0.5">{chan.lpCvrRange}</div>
+                      <div className="text-[10px] text-slate-400 font-semibold">Typical CPM</div>
+                      <div className="font-mono font-bold text-slate-900 mt-0.5">
+                        ${plat.benchmarks.cpm.low.toFixed(2)} – ${plat.benchmarks.cpm.high.toFixed(2)}
+                      </div>
+                      <div className="text-[10px] text-slate-500">(Avg: ${plat.benchmarks.cpm.avg.toFixed(2)})</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-semibold">CTR</div>
+                      <div className="font-mono font-bold text-slate-900 mt-0.5">
+                        {plat.benchmarks.ctr.low}% – {plat.benchmarks.ctr.high}%
+                      </div>
+                      <div className="text-[10px] text-slate-500">(Avg: {plat.benchmarks.ctr.avg}%)</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-semibold">Landing Page CVR</div>
+                      <div className="font-mono font-bold text-slate-900 mt-0.5">
+                        {plat.benchmarks.lpCvr.low}% – {plat.benchmarks.lpCvr.high}%
+                      </div>
+                      <div className="text-[10px] text-slate-500">(Avg: {plat.benchmarks.lpCvr.avg}%)</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-semibold">Benchmark ROAS</div>
+                      <div className="font-mono font-black text-emerald-700 mt-0.5">
+                        {plat.benchmarks.typicalRoas.low}x – {plat.benchmarks.typicalRoas.high}x
+                      </div>
+                      <div className="text-[10px] text-slate-500">Qual: {plat.benchmarks.leadQualRate.avg}%</div>
+                    </div>
+                  </div>
+
+                  {/* Tactics */}
+                  <div className="mt-2.5 pt-2 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <span className="font-bold text-slate-700">Winning Formats:</span>{' '}
+                      <span className="text-slate-600">{plat.keyFormats.join(', ')}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-700">Best Suited For:</span>{' '}
+                      <span className="text-slate-600">{plat.bestSuitedFor.join(', ')}</span>
                     </div>
                   </div>
                 </div>
@@ -229,3 +262,4 @@ export const BenchmarkReferenceModal: React.FC<BenchmarkReferenceModalProps> = (
     </div>
   );
 };
+

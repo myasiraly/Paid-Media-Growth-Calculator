@@ -10,6 +10,7 @@ import {
   X
 } from 'lucide-react';
 import { FunnelInputs } from '../types';
+import { getCountry } from '../data/countries';
 import { 
   calculateRequiredSpend, 
   formatCurrency, 
@@ -28,6 +29,10 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
   onApplySpend,
   onClose,
 }) => {
+  const country = getCountry(inputs.countryCode || 'US');
+  const fmt = (val: number, precision: number = 0) => 
+    formatCurrency(val, precision, country.currency, country.locale);
+
   const [goalType, setGoalType] = useState<'revenue' | 'customers'>('revenue');
   const [targetRevenue, setTargetRevenue] = useState<number>(50000);
   const [targetCustomers, setTargetCustomers] = useState<number>(10);
@@ -55,7 +60,12 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
           <Target className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-white">Reverse Target Planner</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-white">Reverse Target Planner</h3>
+            <span className="text-[10px] bg-slate-800 text-blue-300 px-2 py-0.5 rounded-full border border-slate-700 font-semibold">
+              {country.flag} {country.currency}
+            </span>
+          </div>
           <p className="text-[11px] text-slate-400">
             Define the prospect's growth target to calculate required ad spend and milestone volumes
           </p>
@@ -78,7 +88,7 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
                   : 'text-slate-300 hover:text-white'
               }`}
             >
-              Target Revenue ($)
+              Target Revenue ({country.currencySymbol})
             </button>
             <button
               type="button"
@@ -97,11 +107,13 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
         {/* Target Value Input */}
         <div>
           <label className="block text-[11px] font-medium text-slate-400 mb-1">
-            {goalType === 'revenue' ? 'Desired Monthly Revenue' : 'Desired New Clients / Month'}
+            {goalType === 'revenue' ? `Desired Monthly Revenue (${country.currency})` : 'Desired New Clients / Month'}
           </label>
           <div className="relative">
             {goalType === 'revenue' && (
-              <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                {country.currencySymbol}
+              </span>
             )}
             <input
               type="number"
@@ -126,10 +138,10 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
 
       {/* Target Result Outputs */}
       <div className="bg-slate-800/90 rounded-xl p-4 border border-slate-700/80 mb-4">
-        <div className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+        <div className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2.5 flex items-center justify-between flex-wrap gap-2">
           <span>Required Funnel Milestones (Based on Current Rates)</span>
           <span className="text-slate-400 font-mono text-[11px]">
-            Target: {formatCurrency(effectiveTargetRevenue, 0)} ({formatNumber(results.targetCustomers, 1)} clients)
+            Target: {fmt(effectiveTargetRevenue, 0)} ({formatNumber(results.targetCustomers, 1)} clients)
           </span>
         </div>
 
@@ -137,7 +149,7 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
           <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Required Ad Spend</div>
             <div className="text-base font-bold font-mono text-emerald-400 mt-0.5">
-              {formatCurrency(results.requiredSpend, 0)}
+              {fmt(results.requiredSpend, 0)}
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5">/ month</div>
           </div>
@@ -147,7 +159,7 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
             <div className="text-base font-bold font-mono text-white mt-0.5">
               {formatNumber(results.requiredTraffic)}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">clicks @ {formatCurrency(inputs.expectedCpc, 2)}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">clicks @ {fmt(inputs.expectedCpc, 2)}</div>
           </div>
 
           <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700/60">
@@ -169,9 +181,9 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
       </div>
 
       {/* Action to Apply */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="text-xs text-slate-400">
-          Want to simulate this campaign? Load <strong>{formatCurrency(Math.round(results.requiredSpend), 0)}</strong> spend into the main funnel.
+          Want to simulate this campaign? Load <strong>{fmt(Math.round(results.requiredSpend), 0)}</strong> spend into the main funnel.
         </div>
         <button
           type="button"
@@ -182,9 +194,10 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-colors shrink-0 cursor-pointer"
         >
           <Check className="w-3.5 h-3.5" />
-          <span>Apply Spend (${Math.round(results.requiredSpend).toLocaleString()})</span>
+          <span>Apply Spend ({fmt(Math.round(results.requiredSpend), 0)})</span>
         </button>
       </div>
     </div>
   );
 };
+

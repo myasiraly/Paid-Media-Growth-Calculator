@@ -17,11 +17,14 @@ import {
   Sliders,
   DollarSign,
   Users,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from 'lucide-react';
-import { FunnelInputs, FunnelOutputs } from './types';
+import { FunnelInputs, FunnelOutputs, PlatformId } from './types';
 import { calculateFunnel } from './utils/calculations';
 import { INDUSTRY_BENCHMARKS } from './data/benchmarks';
+import { getCountry, COUNTRIES } from './data/countries';
+import { AD_PLATFORMS, getPlatform } from './data/platforms';
 import { Header } from './components/Header';
 import { FunnelFlowView } from './components/FunnelFlowView';
 import { SummaryMetricsGrid } from './components/SummaryMetricsGrid';
@@ -29,6 +32,8 @@ import { GoalSeeker } from './components/GoalSeeker';
 import { ScenarioComparison } from './components/ScenarioComparison';
 import { ClientPitchModal } from './components/ClientPitchModal';
 import { BenchmarkReferenceModal } from './components/BenchmarkReferenceModal';
+import { CountryComparisonModal } from './components/CountryComparisonModal';
+import { AdPlatformComparisonModal } from './components/AdPlatformComparisonModal';
 
 const DEFAULT_INPUTS: FunnelInputs = {
   monthlyAdSpend: 10000,
@@ -40,7 +45,9 @@ const DEFAULT_INPUTS: FunnelInputs = {
   grossMarginRate: 80,
   clientName: '',
   industry: 'B2B SaaS & Tech',
-  channel: 'Google Search + Paid Social',
+  channel: 'Google Ads (Search & PMax)',
+  countryCode: 'US',
+  platformId: 'google',
 };
 
 export default function App() {
@@ -60,6 +67,8 @@ export default function App() {
   const [isScenariosOpen, setIsScenariosOpen] = useState(false);
   const [isPitchModalOpen, setIsPitchModalOpen] = useState(false);
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
+  const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
+  const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
 
   // Save to local storage on change
   useEffect(() => {
@@ -75,6 +84,14 @@ export default function App() {
     return calculateFunnel(inputs);
   }, [inputs]);
 
+  const currentCountry = useMemo(() => {
+    return getCountry(inputs.countryCode || 'US');
+  }, [inputs.countryCode]);
+
+  const currentPlatform = useMemo(() => {
+    return getPlatform(inputs.platformId || 'google');
+  }, [inputs.platformId]);
+
   const handleInputChange = <K extends keyof FunnelInputs>(key: K, value: FunnelInputs[K]) => {
     setInputs((prev) => ({
       ...prev,
@@ -82,12 +99,49 @@ export default function App() {
     }));
   };
 
+  const handleSelectCountry = (countryCode: string) => {
+    const prevCountry = getCountry(inputs.countryCode || 'US');
+    const newCountry = getCountry(countryCode);
+    
+    // Scale the baseline CPC according to relative country index
+    const baseUsCpc = prevCountry.cpcIndex > 0 ? inputs.expectedCpc / prevCountry.cpcIndex : inputs.expectedCpc;
+    const adjustedCpc = Number((baseUsCpc * newCountry.cpcIndex).toFixed(2));
+
+    setInputs((prev) => ({
+      ...prev,
+      countryCode,
+      expectedCpc: Math.max(0.05, adjustedCpc),
+    }));
+  };
+
+  const handleSelectPlatform = (platformId: PlatformId) => {
+    const platform = getPlatform(platformId);
+    const country = getCountry(inputs.countryCode || 'US');
+    const scaledCpc = Number((platform.recommendedDefaults.expectedCpc * country.cpcIndex).toFixed(2));
+
+    setInputs((prev) => ({
+      ...prev,
+      platformId,
+      channel: platform.name,
+      expectedCpc: Math.max(0.05, scaledCpc),
+      landingPageConversionRate: platform.recommendedDefaults.landingPageConversionRate,
+      leadQualificationRate: platform.recommendedDefaults.leadQualificationRate,
+      salesConversionRate: platform.recommendedDefaults.salesConversionRate,
+    }));
+  };
+
   const handleSelectPreset = (presetId: string) => {
     const preset = INDUSTRY_BENCHMARKS.find((b) => b.id === presetId);
     if (preset) {
+      const country = getCountry(inputs.countryCode || 'US');
+      const scaledCpc = Number((preset.defaults.expectedCpc * country.cpcIndex).toFixed(2));
+      
       setInputs((prev) => ({
         ...prev,
         ...preset.defaults,
+        expectedCpc: scaledCpc,
+        countryCode: prev.countryCode, // preserve active country
+        platformId: prev.platformId, // preserve active platform
         clientName: prev.clientName, // preserve client name
       }));
     }
@@ -117,6 +171,10 @@ export default function App() {
         onReset={handleReset}
         onOpenPitchModal={() => setIsPitchModalOpen(true)}
         onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
+        onOpenCountryModal={() => setIsCountryModalOpen(true)}
+        onSelectCountry={handleSelectCountry}
+        onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
+        onSelectPlatform={handleSelectPlatform}
         onToggleGoalSeeker={() => setIsGoalSeekerOpen((prev) => !prev)}
         isGoalSeekerOpen={isGoalSeekerOpen}
         onToggleScenarios={() => setIsScenariosOpen((prev) => !prev)}
@@ -149,7 +207,7 @@ export default function App() {
           
           {/* Left Funnel Pipeline (7 Cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-base font-bold text-slate-900 tracking-tight">
                   Campaign Conversion Pipeline
@@ -159,8 +217,31 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="text-xs font-semibold text-slate-600 bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-300/60">
-                Industry: <span className="text-slate-900 font-bold">{inputs.industry || 'Custom'}</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsPlatformModalOpen(true)}
+                  className="text-xs font-bold text-slate-900 bg-white hover:bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                  title="Compare Meta, Google, LinkedIn, Twitter, Snapchat, TikTok estimations"
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentPlatform.brandColor }} />
+                  <span>{currentPlatform.name}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCountryModalOpen(true)}
+                  className="text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                  title="Compare results across 20+ global countries"
+                >
+                  <Globe className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{currentCountry.flag} {currentCountry.name}</span>
+                  <span className="text-[10px] text-slate-500 font-mono">({currentCountry.currency})</span>
+                </button>
+
+                <div className="text-xs font-semibold text-slate-600 bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-300/60">
+                  <span className="text-slate-900 font-bold">{inputs.industry || 'Custom'}</span>
+                </div>
               </div>
             </div>
 
@@ -168,6 +249,8 @@ export default function App() {
               inputs={inputs}
               outputs={outputs}
               onChangeInput={handleInputChange}
+              onSelectPlatform={handleSelectPlatform}
+              onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
             />
           </div>
 
@@ -177,6 +260,10 @@ export default function App() {
               inputs={inputs}
               outputs={outputs}
               onChangeInput={handleInputChange}
+              onOpenCountryModal={() => setIsCountryModalOpen(true)}
+              onSelectCountry={handleSelectCountry}
+              onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
+              onSelectPlatform={handleSelectPlatform}
             />
 
             {/* Quick Industry Presets Pill Strip */}
@@ -188,7 +275,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsBenchmarkModalOpen(true)}
-                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700"
+                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
                 >
                   View All Specs →
                 </button>
@@ -200,7 +287,7 @@ export default function App() {
                     key={preset.id}
                     type="button"
                     onClick={() => handleSelectPreset(preset.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                       inputs.industry === preset.name
                         ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200'
@@ -219,7 +306,7 @@ export default function App() {
                   <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                   <span>Growth Sensitivity Levers</span>
                 </span>
-                <span className="text-[10px] text-blue-400 font-mono">Impact Analysis</span>
+                <span className="text-[10px] text-blue-400 font-mono">{currentCountry.currency} Market</span>
               </div>
               <ul className="space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
                 <li className="flex items-start gap-1.5">
@@ -229,13 +316,13 @@ export default function App() {
                     <strong className="text-white">
                       +{((outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100))).toFixed(1)} new clients
                     </strong>{' '}
-                    ({(outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100) * inputs.averageDealSize).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} revenue) without spending an extra dollar on ads.
+                    ({((outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100) * inputs.averageDealSize)).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })} revenue) without spending an extra dollar on ads.
                   </span>
                 </li>
                 <li className="flex items-start gap-1.5">
                   <span className="text-blue-400 font-bold">2.</span>
                   <span>
-                    Current Break-even CAC is <strong className="text-white">${inputs.averageDealSize.toLocaleString()}</strong>. Your projected CAC of <strong className="text-emerald-400">${Math.round(outputs.cac).toLocaleString()}</strong> yields a healthy <strong className="text-blue-300">{((outputs.cac / Math.max(1, inputs.averageDealSize)) * 100).toFixed(0)}%</strong> CAC-to-revenue ratio.
+                    Current Break-even CAC is <strong className="text-white">{inputs.averageDealSize.toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong>. Your projected CAC of <strong className="text-emerald-400">{Math.round(outputs.cac).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong> yields a healthy <strong className="text-blue-300">{((outputs.cac / Math.max(1, inputs.averageDealSize)) * 100).toFixed(0)}%</strong> CAC-to-revenue ratio in {currentCountry.name}.
                   </span>
                 </li>
               </ul>
@@ -250,8 +337,8 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-4 mt-12 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Paid Media Growth Calculator · Sales Enablement & Benchmark Simulator</span>
-          <span className="text-slate-400">Deterministic Mathematical Funnel Engine</span>
+          <span>Paid Media Growth Calculator · Sales Enablement & Country Benchmark Simulator</span>
+          <span className="text-slate-400">Global Deterministic Mathematical Funnel Engine</span>
         </div>
       </footer>
 
@@ -267,9 +354,39 @@ export default function App() {
       {isBenchmarkModalOpen && (
         <BenchmarkReferenceModal
           onSelectIndustry={handleSelectPreset}
+          onSelectPlatform={(platId) => {
+            handleSelectPlatform(platId);
+            setIsBenchmarkModalOpen(false);
+          }}
           onClose={() => setIsBenchmarkModalOpen(false)}
+        />
+      )}
+
+      {isCountryModalOpen && (
+        <CountryComparisonModal
+          inputs={inputs}
+          selectedCountryCode={inputs.countryCode || 'US'}
+          onSelectCountry={(code) => {
+            handleSelectCountry(code);
+            setIsCountryModalOpen(false);
+          }}
+          onClose={() => setIsCountryModalOpen(false)}
+        />
+      )}
+
+      {isPlatformModalOpen && (
+        <AdPlatformComparisonModal
+          inputs={inputs}
+          selectedPlatformId={inputs.platformId || 'google'}
+          onSelectPlatform={(platId) => {
+            handleSelectPlatform(platId);
+            setIsPlatformModalOpen(false);
+          }}
+          onClose={() => setIsPlatformModalOpen(false)}
         />
       )}
     </div>
   );
 }
+
+

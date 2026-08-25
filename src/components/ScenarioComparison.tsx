@@ -9,6 +9,7 @@ import {
   X
 } from 'lucide-react';
 import { FunnelInputs, FunnelOutputs } from '../types';
+import { getCountry } from '../data/countries';
 import { 
   calculateFunnel, 
   formatCurrency, 
@@ -28,6 +29,10 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
   onApplyScenario,
   onClose,
 }) => {
+  const country = getCountry(inputs.countryCode || 'US');
+  const fmt = (val: number, precision: number = 0) => 
+    formatCurrency(val, precision, country.currency, country.locale);
+
   // Scenario 1: Conservative (15% higher CPC, 20% lower conversion rates)
   const conservativeInputs: FunnelInputs = {
     ...inputs,
@@ -97,7 +102,12 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
           <Layers className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-slate-900">3-Tier Scenario Forecast</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900">3-Tier Scenario Forecast</h3>
+            <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 font-semibold">
+              {country.flag} {country.name} ({country.currency})
+            </span>
+          </div>
           <p className="text-[11px] text-slate-500">
             Compare Conservative vs Expected vs Optimized campaign performance side-by-side
           </p>
@@ -128,7 +138,7 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
             <div className="space-y-2 bg-white rounded-lg p-3 border border-slate-200/80 mb-3 text-xs">
               <div className="flex justify-between items-center text-slate-600">
                 <span>Monthly Ad Spend</span>
-                <span className="font-mono font-bold text-slate-900">{formatCurrency(sc.inputs.monthlyAdSpend)}</span>
+                <span className="font-mono font-bold text-slate-900">{fmt(sc.inputs.monthlyAdSpend)}</span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Expected Traffic</span>
@@ -148,11 +158,11 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Customer Acquisition Cost</span>
-                <span className="font-mono font-bold text-slate-900">{formatCurrency(sc.outputs.cac, 0)}</span>
+                <span className="font-mono font-bold text-slate-900">{fmt(sc.outputs.cac, 0)}</span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span className="font-semibold text-emerald-900">Projected Revenue</span>
-                <span className="font-mono font-bold text-emerald-800">{formatCurrency(sc.outputs.revenue, 0)}</span>
+                <span className="font-mono font-bold text-emerald-800">{fmt(sc.outputs.revenue, 0)}</span>
               </div>
               <div className="flex justify-between items-center text-slate-600 pt-1.5 border-t border-slate-100">
                 <span className="font-bold text-blue-900">Expected ROAS</span>
@@ -174,3 +184,4 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
     </div>
   );
 };
+

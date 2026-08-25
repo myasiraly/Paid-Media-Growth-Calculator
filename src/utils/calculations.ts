@@ -81,14 +81,39 @@ export function calculateFunnel(inputs: FunnelInputs): FunnelOutputs {
   };
 }
 
-export function formatCurrency(value: number, precision: number = 0): string {
-  if (isNaN(value) || !isFinite(value)) return '$0';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: precision,
-    maximumFractionDigits: precision,
-  }).format(value);
+export function formatCurrency(
+  value: number, 
+  precision: number = 0, 
+  currency: string = 'USD', 
+  locale: string = 'en-US'
+): string {
+  if (isNaN(value) || !isFinite(value)) {
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency || 'USD',
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision,
+      }).format(0);
+    } catch {
+      return '$0';
+    }
+  }
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    }).format(value);
+  } catch {
+    // Fallback in case of unknown currency code
+    return `${currency} ${value.toLocaleString(undefined, {
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    })}`;
+  }
 }
 
 export function formatNumber(value: number, precision: number = 0): string {

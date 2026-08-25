@@ -12,9 +12,14 @@ import {
   Info,
   Sparkles,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Globe,
+  Zap,
+  Layers
 } from 'lucide-react';
-import { FunnelInputs, FunnelOutputs } from '../types';
+import { FunnelInputs, FunnelOutputs, PlatformId } from '../types';
+import { getCountry } from '../data/countries';
+import { AD_PLATFORMS, getPlatform, calculatePlatformFunnel } from '../data/platforms';
 import { 
   formatCurrency, 
   formatNumber, 
@@ -26,26 +31,120 @@ interface FunnelFlowViewProps {
   inputs: FunnelInputs;
   outputs: FunnelOutputs;
   onChangeInput: <K extends keyof FunnelInputs>(key: K, value: FunnelInputs[K]) => void;
+  onSelectPlatform?: (platformId: PlatformId) => void;
+  onOpenPlatformModal?: () => void;
 }
 
 export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
   inputs,
   outputs,
   onChangeInput,
+  onSelectPlatform,
+  onOpenPlatformModal,
 }) => {
+  const country = getCountry(inputs.countryCode || 'US');
+  const currentPlatform = getPlatform(inputs.platformId || 'google');
+  
+  const fmt = (val: number, precision: number = 0) => 
+    formatCurrency(val, precision, country.currency, country.locale);
+
+  const handleApplyPlatform = (platformId: PlatformId) => {
+    if (onSelectPlatform) {
+      onSelectPlatform(platformId);
+    } else {
+      const plat = getPlatform(platformId);
+      const cpc = Number((plat.recommendedDefaults.expectedCpc * country.cpcIndex).toFixed(2));
+      onChangeInput('platformId', platformId);
+      onChangeInput('channel', plat.name);
+      onChangeInput('expectedCpc', Math.max(0.05, cpc));
+      onChangeInput('landingPageConversionRate', plat.recommendedDefaults.landingPageConversionRate);
+      onChangeInput('leadQualificationRate', plat.recommendedDefaults.leadQualificationRate);
+      onChangeInput('salesConversionRate', plat.recommendedDefaults.salesConversionRate);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* 6 Ad Platforms Authentic Estimations Switcher Bar */}
+      <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-blue-500 text-white flex items-center justify-center font-black text-xs">
+              <Zap className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                Ad Network & Channel Estimator
+              </h3>
+              <span className="text-[11px] text-slate-400">
+                Switch between authentic network benchmarks calibrated for {country.name}
+              </span>
+            </div>
+          </div>
+
+          {onOpenPlatformModal && (
+            <button
+              type="button"
+              onClick={onOpenPlatformModal}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors cursor-pointer self-start sm:self-auto bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700"
+            >
+              <span>View 6-Network Matrix</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {/* 6 Channel Chips */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {AD_PLATFORMS.map((plat) => {
+            const isSelected = (inputs.platformId || 'google') === plat.id;
+            const platformCpc = Number((plat.recommendedDefaults.expectedCpc * country.cpcIndex).toFixed(2));
+
+            return (
+              <button
+                key={plat.id}
+                type="button"
+                onClick={() => handleApplyPlatform(plat.id)}
+                className={`p-2.5 rounded-xl text-left transition-all cursor-pointer relative ${
+                  isSelected
+                    ? 'bg-blue-600/90 text-white ring-2 ring-blue-400 shadow-md scale-[1.02]'
+                    : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/80 hover:border-slate-600'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span 
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: plat.brandColor }}
+                  />
+                  <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-white' : 'text-blue-400'}`}>
+                    {fmt(platformCpc, 2)}
+                  </span>
+                </div>
+                <div className="text-xs font-bold truncate">
+                  {plat.name}
+                </div>
+                <div className="text-[10px] text-slate-300/80 truncate mt-0.5">
+                  {plat.audienceIntent}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Visual Instruction Banner for Sales Call */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start justify-between gap-3 text-slate-700">
         <div className="flex items-start gap-2.5">
           <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed">
-            <span className="font-semibold text-slate-900">Interactive Prospect Funnel:</span>{' '}
+            <span className="font-semibold text-slate-900">Interactive Prospect Funnel ({currentPlatform.name}):</span>{' '}
             Adjust each stage live on your sales call. Walk prospective clients from top-of-funnel ad spend down to bottom-line ROAS and payback benchmarks.
           </div>
         </div>
-        <div className="text-[11px] font-medium text-slate-500 hidden sm:block shrink-0">
-          Flow: Spend → Traffic → Leads → Deals → CAC → ROAS
+        <div className="text-[11px] font-medium text-slate-500 hidden sm:flex items-center gap-1.5 shrink-0 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+          <span>{country.flag}</span>
+          <span className="font-semibold text-slate-700">{country.name}</span>
+          <span className="text-slate-400">({country.currency})</span>
         </div>
       </div>
 
@@ -67,6 +166,9 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   <span className="text-[11px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
                     Input
                   </span>
+                  <span className="text-[11px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 font-semibold">
+                    {country.currency}
+                  </span>
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Monthly Ad Spend</h3>
               </div>
@@ -79,13 +181,13 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   key={amt}
                   type="button"
                   onClick={() => onChangeInput('monthlyAdSpend', amt)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     inputs.monthlyAdSpend === amt
                       ? 'bg-blue-600 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                   }`}
                 >
-                  ${amt >= 1000 ? `${amt / 1000}k` : amt}
+                  {country.currencySymbol}{amt >= 1000 ? `${amt / 1000}k` : amt}
                 </button>
               ))}
             </div>
@@ -104,16 +206,18 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-medium mt-1">
-                <span>$500/mo</span>
-                <span>$25,000/mo</span>
-                <span>$50,000/mo</span>
-                <span>$100,000/mo</span>
+                <span>{fmt(500)}/mo</span>
+                <span>{fmt(25000)}/mo</span>
+                <span>{fmt(50000)}/mo</span>
+                <span>{fmt(100000)}/mo</span>
               </div>
             </div>
 
             <div className="md:col-span-5 flex items-center justify-end gap-2">
               <div className="relative w-full max-w-[200px]">
-                <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                  {country.currencySymbol}
+                </span>
                 <input
                   id="spend-number-input"
                   type="number"
@@ -152,6 +256,10 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   <span className="text-[11px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
                     Input
                   </span>
+                  <span className="text-[11px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold flex items-center gap-1">
+                    <span>{country.flag}</span>
+                    <span>{country.marketTier}</span>
+                  </span>
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Expected CPC (Cost Per Click)</h3>
               </div>
@@ -159,7 +267,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
 
             {/* Quick CPC Benchmark helper */}
             <div className="text-xs text-slate-500">
-              Typical: <span className="font-mono font-semibold text-slate-700">$1.50 - $8.00</span> depending on intent
+              {country.name} typical: <span className="font-mono font-semibold text-slate-700">{country.typicalCpcRange}</span>
             </div>
           </div>
 
@@ -168,28 +276,30 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
               <input
                 id="cpc-slider"
                 type="range"
-                min="0.20"
-                max="25.00"
+                min="0.10"
+                max="30.00"
                 step="0.10"
                 value={inputs.expectedCpc}
                 onChange={(e) => onChangeInput('expectedCpc', Number(e.target.value))}
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-medium mt-1">
-                <span>$0.20 (Social/Meta)</span>
-                <span>$5.00 (Google Search)</span>
-                <span>$15.00+ (High B2B)</span>
+                <span>{fmt(0.50, 2)} (Social/Meta)</span>
+                <span>{fmt(4.50, 2)} (Search)</span>
+                <span>{fmt(15.00, 2)}+ (High Intent B2B)</span>
               </div>
             </div>
 
             <div className="md:col-span-5 flex items-center justify-end gap-2">
               <div className="relative w-full max-w-[180px]">
-                <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                  {country.currencySymbol}
+                </span>
                 <input
                   id="cpc-number-input"
                   type="number"
-                  min="0.05"
-                  max="100"
+                  min="0.01"
+                  max="500"
                   step="0.10"
                   value={inputs.expectedCpc || ''}
                   onChange={(e) => onChangeInput('expectedCpc', Number(e.target.value))}
@@ -239,7 +349,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
 
           <div className="mt-2 text-xs text-slate-600 flex items-center gap-2">
             <span className="font-mono bg-white px-2.5 py-0.5 rounded border border-slate-200">
-              {formatCurrency(inputs.monthlyAdSpend)} Spend ÷ {formatCurrency(inputs.expectedCpc, 2)} CPC = {formatNumber(outputs.expectedTraffic)} clicks
+              {fmt(inputs.monthlyAdSpend)} Spend ÷ {fmt(inputs.expectedCpc, 2)} CPC = {formatNumber(outputs.expectedTraffic)} clicks
             </span>
           </div>
         </div>
@@ -279,7 +389,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   key={rate}
                   type="button"
                   onClick={() => onChangeInput('landingPageConversionRate', rate)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     inputs.landingPageConversionRate === rate
                       ? 'bg-indigo-600 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -361,7 +471,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
               <div className="text-right">
                 <div className="text-[11px] font-medium text-slate-500">Cost Per Lead (CPL)</div>
                 <div className="text-sm font-bold font-mono text-slate-800">
-                  {formatCurrency(outputs.costPerLead, 2)}
+                  {fmt(outputs.costPerLead, 2)}
                 </div>
               </div>
               <div className="flex items-baseline gap-2 bg-white px-4 py-2 rounded-lg border border-indigo-200 shadow-xs">
@@ -415,7 +525,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   key={rate}
                   type="button"
                   onClick={() => onChangeInput('leadQualificationRate', rate)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     inputs.leadQualificationRate === rate
                       ? 'bg-sky-600 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -497,7 +607,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
               <div className="text-right">
                 <div className="text-[11px] font-medium text-slate-500">Cost Per SQL (CPQL)</div>
                 <div className="text-sm font-bold font-mono text-slate-800">
-                  {formatCurrency(outputs.costPerQualifiedLead, 2)}
+                  {fmt(outputs.costPerQualifiedLead, 2)}
                 </div>
               </div>
               <div className="flex items-baseline gap-2 bg-white px-4 py-2 rounded-lg border border-sky-200 shadow-xs">
@@ -545,7 +655,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   key={rate}
                   type="button"
                   onClick={() => onChangeInput('salesConversionRate', rate)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     inputs.salesConversionRate === rate
                       ? 'bg-teal-600 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -668,7 +778,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
 
             <div className="flex items-baseline gap-2 bg-slate-800/90 px-4 py-2 rounded-lg border border-slate-700 shadow-inner">
               <span className="text-2xl font-black text-blue-400 font-mono tracking-tight">
-                {formatCurrency(outputs.cac, 0)}
+                {fmt(outputs.cac, 0)}
               </span>
               <span className="text-xs font-medium text-slate-400">per won customer</span>
             </div>
@@ -676,7 +786,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
 
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
             <span className="font-mono">
-              {formatCurrency(inputs.monthlyAdSpend)} Spend ÷ {formatNumber(outputs.customers, 1)} Customers = {formatCurrency(outputs.cac, 2)} CAC
+              {fmt(inputs.monthlyAdSpend)} Spend ÷ {formatNumber(outputs.customers, 1)} Customers = {fmt(outputs.cac, 2)} CAC
             </span>
             {outputs.cac > 0 && inputs.averageDealSize > 0 && (
               <span className="text-[11px] text-slate-300">
@@ -721,13 +831,13 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                   key={deal}
                   type="button"
                   onClick={() => onChangeInput('averageDealSize', deal)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     inputs.averageDealSize === deal
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                   }`}
                 >
-                  ${deal >= 1000 ? `${deal / 1000}k` : deal}
+                  {country.currencySymbol}{deal >= 1000 ? `${deal / 1000}k` : deal}
                 </button>
               ))}
             </div>
@@ -746,15 +856,17 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-medium mt-1">
-                <span>$250 (Mid Ecom)</span>
-                <span>$5,000 (Services)</span>
-                <span>$20,000+ (Enterprise)</span>
+                <span>{fmt(250)} (Mid Ecom)</span>
+                <span>{fmt(5000)} (Services)</span>
+                <span>{fmt(20000)}+ (Enterprise)</span>
               </div>
             </div>
 
             <div className="md:col-span-5 flex items-center justify-end gap-2">
               <div className="relative w-full max-w-[200px]">
-                <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                  {country.currencySymbol}
+                </span>
                 <input
                   id="deal-size-number-input"
                   type="number"
@@ -774,11 +886,11 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             <div>
               <div className="text-xs font-semibold text-emerald-900">Total Projected Monthly Revenue</div>
               <div className="text-[11px] text-emerald-700 font-mono">
-                {formatNumber(outputs.customers, 1)} Customers × {formatCurrency(inputs.averageDealSize)} Deal Size
+                {formatNumber(outputs.customers, 1)} Customers × {fmt(inputs.averageDealSize)} Deal Size
               </div>
             </div>
             <div className="text-2xl font-black text-emerald-900 font-mono">
-              {formatCurrency(outputs.revenue, 0)}
+              {fmt(outputs.revenue, 0)}
             </div>
           </div>
         </div>
@@ -816,7 +928,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
               <div className="bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-700 text-right">
                 <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Net Profit</div>
                 <div className={`text-xl font-bold font-mono ${outputs.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {formatCurrency(outputs.netProfit, 0)}
+                  {fmt(outputs.netProfit, 0)}
                 </div>
               </div>
 
@@ -831,10 +943,10 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
 
           <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
             <span className="font-mono">
-              {formatCurrency(outputs.revenue, 0)} Revenue ÷ {formatCurrency(inputs.monthlyAdSpend)} Ad Spend = <strong>{outputs.roasPercentage.toFixed(0)}% ROAS</strong>
+              {fmt(outputs.revenue, 0)} Revenue ÷ {fmt(inputs.monthlyAdSpend)} Ad Spend = <strong>{outputs.roasPercentage.toFixed(0)}% ROAS</strong>
             </span>
             <span className="text-slate-400">
-              For every <strong>$1.00</strong> spent, client generates <strong>{formatCurrency(outputs.roas, 2)}</strong> in revenue.
+              For every <strong>{country.currencySymbol}1.00</strong> spent, client generates <strong>{fmt(outputs.roas, 2)}</strong> in revenue.
             </span>
           </div>
         </div>
@@ -843,3 +955,4 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
     </div>
   );
 };
+

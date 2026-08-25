@@ -1,3 +1,52 @@
+export interface CountryConfig {
+  code: string;
+  name: string;
+  flag: string;
+  currency: string;
+  currencySymbol: string;
+  locale: string;
+  cpcIndex: number; // 1.0 = US baseline
+  cvrMultiplier?: number; // regional conversion multiplier default 1.0
+  region: 'North America' | 'Europe' | 'Asia-Pacific' | 'Middle East' | 'Latin America' | 'Global';
+  marketTier: 'Tier 1' | 'Tier 2' | 'Tier 3';
+  typicalCpcRange: string;
+  description: string;
+}
+
+export type PlatformId = 'google' | 'meta' | 'linkedin' | 'twitter' | 'snapchat' | 'tiktok';
+
+export interface AdPlatform {
+  id: PlatformId;
+  name: string;
+  shortName: string;
+  category: string;
+  tagline: string;
+  brandColor: string;
+  bgLight: string;
+  borderLight: string;
+  audienceIntent: 'High Active Search' | 'Visual Social Discovery' | 'B2B Professional ICP' | 'Real-Time / Tech Conversation' | 'Gen Z & Millennial AR/Video' | 'Viral UGC & Creator Video';
+  benchmarks: {
+    cpc: { low: number; avg: number; high: number };
+    cpm: { low: number; avg: number; high: number };
+    ctr: { low: number; avg: number; high: number };
+    lpCvr: { low: number; avg: number; high: number };
+    leadQualRate: { low: number; avg: number; high: number };
+    salesCloseRate: { low: number; avg: number; high: number };
+    typicalRoas: { low: number; avg: number; high: number };
+  };
+  recommendedDefaults: {
+    expectedCpc: number;
+    landingPageConversionRate: number;
+    leadQualificationRate: number;
+    salesConversionRate: number;
+  };
+  keyFormats: string[];
+  bestSuitedFor: string[];
+  keyTactics: string[];
+  pros: string[];
+  watchOuts: string[];
+}
+
 export interface FunnelInputs {
   monthlyAdSpend: number; // e.g. $10,000
   expectedCpc: number; // e.g. $3.50
@@ -9,6 +58,8 @@ export interface FunnelInputs {
   clientName?: string;
   industry?: string;
   channel?: string;
+  platformId?: PlatformId; // 'google' | 'meta' | 'linkedin' | 'twitter' | 'snapchat' | 'tiktok'
+  countryCode?: string; // e.g. 'US', 'GB', 'CA', 'AU', 'DE', etc.
 }
 
 export interface FunnelOutputs {

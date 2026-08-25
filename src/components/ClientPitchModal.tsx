@@ -9,9 +9,13 @@ import {
   DollarSign, 
   TrendingUp, 
   Sparkles,
-  Printer
+  Printer,
+  Globe,
+  Zap
 } from 'lucide-react';
 import { FunnelInputs, FunnelOutputs } from '../types';
+import { getCountry } from '../data/countries';
+import { getPlatform } from '../data/platforms';
 import { 
   formatCurrency, 
   formatNumber, 
@@ -31,53 +35,62 @@ export const ClientPitchModal: React.FC<ClientPitchModalProps> = ({
   onClose,
 }) => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const country = getCountry(inputs.countryCode || 'US');
+  const platform = getPlatform(inputs.platformId || 'google');
+  const fmt = (val: number, precision: number = 0) => 
+    formatCurrency(val, precision, country.currency, country.locale);
 
   const prospectName = inputs.clientName?.trim() || 'Prospective Client';
   const industryTag = inputs.industry || 'General';
 
   const executiveSummaryText = `PAID MEDIA GROWTH FORECAST
 Client: ${prospectName}
+Ad Platform / Channel: ${platform.name} (${platform.audienceIntent})
+Target Market / Country: ${country.name} (${country.code})
+Currency: ${country.currency}
 Industry / Vertical: ${industryTag}
 Date: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
 
 ==================================================
-CAMPAIGN FUNNEL BENCHMARKS
+CAMPAIGN FUNNEL BENCHMARKS (${platform.name.toUpperCase()})
 ==================================================
-1. Monthly Ad Budget:            ${formatCurrency(inputs.monthlyAdSpend)}
-2. Estimated Unit CPC:           ${formatCurrency(inputs.expectedCpc, 2)}
+1. Monthly Ad Budget:            ${fmt(inputs.monthlyAdSpend)}
+2. Estimated Unit CPC:           ${fmt(inputs.expectedCpc, 2)}
 3. Projected Targeted Traffic:   ${formatNumber(outputs.expectedTraffic)} visitors / mo
 4. Landing Page Conv. Rate:      ${inputs.landingPageConversionRate}%
 5. Total Leads / Inquiries:      ${formatNumber(outputs.leads, 1)} leads / mo
-   - Cost Per Lead (CPL):        ${formatCurrency(outputs.costPerLead, 2)}
+   - Cost Per Lead (CPL):        ${fmt(outputs.costPerLead, 2)}
 6. Lead Qualification Rate:      ${inputs.leadQualificationRate}%
 7. Qualified Opportunities:      ${formatNumber(outputs.qualifiedLeads, 1)} SQLs / mo
-   - Cost Per SQL (CPQL):        ${formatCurrency(outputs.costPerQualifiedLead, 2)}
+   - Cost Per SQL (CPQL):        ${fmt(outputs.costPerQualifiedLead, 2)}
 8. Sales Close / Win Rate:       ${inputs.salesConversionRate}%
 9. New Customers / Deals:        ${formatNumber(outputs.customers, 1)} closed won / mo
-10. Customer Acquisition Cost:   ${formatCurrency(outputs.cac, 0)} per customer
-11. Average Deal Size:           ${formatCurrency(inputs.averageDealSize)}
-12. Projected Monthly Revenue:   ${formatCurrency(outputs.revenue, 0)}
+10. Customer Acquisition Cost:   ${fmt(outputs.cac, 0)} per customer
+11. Average Deal Size:           ${fmt(inputs.averageDealSize)}
+12. Projected Monthly Revenue:   ${fmt(outputs.revenue, 0)}
 13. Expected ROAS:               ${formatMultiplier(outputs.roas, 2)} (${outputs.roasPercentage.toFixed(0)}%)
-14. Projected Net Profit:        ${formatCurrency(outputs.netProfit, 0)}
+14. Projected Net Profit:        ${fmt(outputs.netProfit, 0)}
 
 ==================================================
 EXECUTIVE SUMMARY & RATIONALE
 ==================================================
-Based on our growth model, deploying a monthly budget of ${formatCurrency(inputs.monthlyAdSpend)} is projected to drive ${formatNumber(outputs.expectedTraffic)} high-intent visitors. At an estimated ${inputs.landingPageConversionRate}% landing page conversion and a ${inputs.leadQualificationRate}% sales qualification rate, this generates ${formatNumber(outputs.qualifiedLeads, 1)} discovery calls per month.
+Based on our growth model for ${platform.name} in the ${country.name} market, deploying a monthly budget of ${fmt(inputs.monthlyAdSpend)} is projected to drive ${formatNumber(outputs.expectedTraffic)} high-intent visitors at an average CPC of ${fmt(inputs.expectedCpc, 2)}. At an estimated ${inputs.landingPageConversionRate}% landing page conversion and a ${inputs.leadQualificationRate}% sales qualification rate, this generates ${formatNumber(outputs.qualifiedLeads, 1)} discovery calls per month.
 
-With your team's ${inputs.salesConversionRate}% closing rate, this translates into ${formatNumber(outputs.customers, 1)} new paying clients per month at an acquisition cost (CAC) of ${formatCurrency(outputs.cac, 0)}. Against an average deal value of ${formatCurrency(inputs.averageDealSize)}, this generates ${formatCurrency(outputs.revenue, 0)} in new monthly revenue, delivering a ${formatMultiplier(outputs.roas, 2)} Return On Ad Spend (ROAS).`;
+With your team's ${inputs.salesConversionRate}% closing rate, this translates into ${formatNumber(outputs.customers, 1)} new paying clients per month at an acquisition cost (CAC) of ${fmt(outputs.cac, 0)}. Against an average deal value of ${fmt(inputs.averageDealSize)}, this generates ${fmt(outputs.revenue, 0)} in new monthly revenue, delivering a ${formatMultiplier(outputs.roas, 2)} Return On Ad Spend (ROAS).`;
 
   const emailRecapText = `Hi ${prospectName.split(' ')[0] || 'there'},
 
-Great speaking with you today! As discussed, here is the paid media growth model we walked through for your campaign:
+Great speaking with you today! As discussed, here is the paid media growth model we walked through for your campaign on ${platform.name} in ${country.name}:
 
-- Monthly Ad Spend: ${formatCurrency(inputs.monthlyAdSpend)}
-- Targeted Clicks: ~${formatNumber(outputs.expectedTraffic)} visitors (@ ${formatCurrency(inputs.expectedCpc, 2)} CPC)
+- Primary Channel: ${platform.name} (${platform.audienceIntent})
+- Target Market: ${country.flag} ${country.name} (${country.currency})
+- Monthly Ad Spend: ${fmt(inputs.monthlyAdSpend)}
+- Targeted Clicks: ~${formatNumber(outputs.expectedTraffic)} visitors (@ ${fmt(inputs.expectedCpc, 2)} CPC)
 - Inbound Leads: ~${formatNumber(outputs.leads, 0)} leads (${inputs.landingPageConversionRate}% LP CVR)
 - Qualified Sales Calls: ~${formatNumber(outputs.qualifiedLeads, 0)} SQLs (${inputs.leadQualificationRate}% Qual Rate)
 - Projected New Customers: ~${formatNumber(outputs.customers, 1)} clients (${inputs.salesConversionRate}% Close Rate)
-- Customer Acquisition Cost: ${formatCurrency(outputs.cac, 0)}
-- Projected Monthly Revenue: ${formatCurrency(outputs.revenue, 0)}
+- Customer Acquisition Cost: ${fmt(outputs.cac, 0)}
+- Projected Monthly Revenue: ${fmt(outputs.revenue, 0)}
 - Target ROAS: ${formatMultiplier(outputs.roas, 2)}
 
 Let me know if you have any questions on these benchmarks. Looking forward to our next steps!`;
@@ -99,7 +112,13 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
               <Share2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Client Pitch Sheet & Proposal Summary</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white">Client Pitch Sheet & Proposal Summary</h2>
+                <span className="text-xs bg-slate-800 text-blue-300 px-2 py-0.5 rounded-full border border-slate-700 font-semibold flex items-center gap-1">
+                  <span>{country.flag}</span>
+                  <span>{country.currency}</span>
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
                 Ready-to-send recap formatted for sales follow-up and proposal decks
               </p>
@@ -121,7 +140,7 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Monthly Spend</div>
-              <div className="text-sm font-bold font-mono text-slate-900">{formatCurrency(inputs.monthlyAdSpend)}</div>
+              <div className="text-sm font-bold font-mono text-slate-900">{fmt(inputs.monthlyAdSpend)}</div>
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Closed Deals</div>
@@ -129,7 +148,7 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Projected Revenue</div>
-              <div className="text-sm font-bold font-mono text-emerald-700">{formatCurrency(outputs.revenue, 0)}</div>
+              <div className="text-sm font-bold font-mono text-emerald-700">{fmt(outputs.revenue, 0)}</div>
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Projected ROAS</div>
@@ -221,3 +240,4 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
     </div>
   );
 };
+
