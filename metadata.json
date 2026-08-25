@@ -1,0 +1,6 @@
+{
+  "name": "Paid Media Growth Calculator",
+  "description": "Interactive paid media funnel calculator and benchmark simulator for sales teams to model spend, traffic, conversion rates, CAC, revenue, and ROAS during client calls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
