@@ -11,17 +11,22 @@ import {
   Sparkles,
   Printer,
   Globe,
-  Zap
+  Zap,
+  Download,
+  Link2
 } from 'lucide-react';
 import { FunnelInputs, FunnelOutputs } from '../types';
 import { getCountry } from '../data/countries';
 import { getPlatform } from '../data/platforms';
+import { exportFunnelToCsv } from '../utils/exportCsv';
+import { copyShareableLink, getShareableUrl } from '../utils/urlState';
 import { 
   formatCurrency, 
   formatNumber, 
   formatPercent, 
   formatMultiplier 
 } from '../utils/calculations';
+import { GHLArmyLogo } from './GHLArmyLogo';
 
 interface ClientPitchModalProps {
   inputs: FunnelInputs;
@@ -106,15 +111,17 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
       <div className="bg-white border border-slate-200 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden my-8">
         
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+        <div className="bg-[#20223A] text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
-              <Share2 className="w-5 h-5" />
+            <div className="p-1.5 rounded-xl bg-white text-slate-900 flex items-center justify-center shadow-xs">
+              <GHLArmyLogo size={28} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white">Client Pitch Sheet & Proposal Summary</h2>
-                <span className="text-xs bg-slate-800 text-blue-300 px-2 py-0.5 rounded-full border border-slate-700 font-semibold flex items-center gap-1">
+                <h2 className="text-base font-bold text-white">
+                  Client Pitch Sheet & Proposal
+                </h2>
+                <span className="text-xs bg-slate-800 text-[#00B69B] px-2 py-0.5 rounded-full border border-slate-700 font-semibold flex items-center gap-1">
                   <span>{country.flag}</span>
                   <span>{country.currency}</span>
                 </span>
@@ -152,7 +159,7 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Projected ROAS</div>
-              <div className="text-sm font-black font-mono text-blue-900">{formatMultiplier(outputs.roas, 2)}</div>
+              <div className="text-sm font-black font-mono text-[#00B69B]">{formatMultiplier(outputs.roas, 2)}</div>
             </div>
           </div>
 
@@ -200,22 +207,22 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
               <button
                 type="button"
                 onClick={() => handleCopy(executiveSummaryText, 'proposal')}
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-[#20223A] hover:bg-slate-800 text-white transition-colors cursor-pointer"
               >
                 {copiedSection === 'proposal' ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-blue-400">Copied Full Proposal!</span>
+                    <Check className="w-3.5 h-3.5 text-[#00B69B]" />
+                    <span className="text-[#00B69B]">Copied Full Proposal!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5 text-blue-400" />
+                    <Copy className="w-3.5 h-3.5 text-[#00B69B]" />
                     <span>Copy Full Proposal</span>
                   </>
                 )}
               </button>
             </div>
-            <pre className="p-3.5 bg-slate-900 text-slate-200 border border-slate-800 rounded-xl text-xs font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
+            <pre className="p-3.5 bg-[#20223A] text-slate-200 border border-slate-800 rounded-xl text-xs font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
               {executiveSummaryText}
             </pre>
           </div>
@@ -223,17 +230,52 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+        <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex items-center justify-between flex-wrap gap-2">
           <span className="text-xs text-slate-500 font-medium">
-            Pro-tip: Paste directly into your proposal deck or CRM opportunity notes.
+            Pro-tip: Paste directly into your proposal deck or download a complete CSV report.
           </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-800 transition-colors cursor-pointer"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              id="pitch-modal-share-link-btn"
+              type="button"
+              onClick={async () => {
+                const ok = await copyShareableLink(inputs);
+                if (ok) {
+                  setCopiedSection('share-link');
+                  setTimeout(() => setCopiedSection(null), 2500);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#00B69B] hover:bg-[#009e86] text-white transition-colors cursor-pointer shadow-2xs"
+            >
+              {copiedSection === 'share-link' ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Link Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-3.5 h-3.5" />
+                  <span>Copy Shareable Link</span>
+                </>
+              )}
+            </button>
+            <button
+              id="pitch-modal-export-csv-btn"
+              type="button"
+              onClick={() => exportFunnelToCsv(inputs, outputs)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer shadow-2xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV File</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-800 transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
       </div>

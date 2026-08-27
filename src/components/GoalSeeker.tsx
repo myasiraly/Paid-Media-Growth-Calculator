@@ -45,7 +45,7 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
   const results = calculateRequiredSpend(effectiveTargetRevenue, inputs);
 
   return (
-    <div className="bg-slate-900 text-white border border-slate-800 rounded-xl p-5 shadow-lg relative">
+    <div className="bg-[#20223A] text-white border border-slate-800 rounded-xl p-5 shadow-lg relative">
       <button
         type="button"
         onClick={onClose}
@@ -56,13 +56,13 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
       </button>
 
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+        <div className="w-7 h-7 rounded-lg bg-[#00B69B] text-white flex items-center justify-center font-bold">
           <Target className="w-4 h-4" />
         </div>
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-white">Reverse Target Planner</h3>
-            <span className="text-[10px] bg-slate-800 text-blue-300 px-2 py-0.5 rounded-full border border-slate-700 font-semibold">
+            <span className="text-[10px] bg-slate-800 text-[#00B69B] px-2 py-0.5 rounded-full border border-slate-700 font-semibold">
               {country.flag} {country.currency}
             </span>
           </div>
@@ -78,13 +78,13 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
           <label className="block text-[11px] font-medium text-slate-400 mb-1">
             Goal Mode
           </label>
-          <div className="grid grid-cols-2 gap-1.5 bg-slate-800 p-1 rounded-lg">
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-900/80 p-1 rounded-lg border border-slate-800">
             <button
               type="button"
               onClick={() => setGoalType('revenue')}
               className={`py-1 px-2 rounded text-xs font-semibold transition-colors cursor-pointer ${
                 goalType === 'revenue'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-[#00B69B] text-white shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -95,7 +95,7 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
               onClick={() => setGoalType('customers')}
               className={`py-1 px-2 rounded text-xs font-semibold transition-colors cursor-pointer ${
                 goalType === 'customers'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-[#00B69B] text-white shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -130,15 +130,15 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
               }}
               className={`w-full ${
                 goalType === 'revenue' ? 'pl-8' : 'pl-3'
-              } pr-3 py-1.5 text-right font-mono font-bold text-white bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-blue-500`}
+              } pr-3 py-1.5 text-right font-mono font-bold text-white bg-slate-900 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-[#00B69B]`}
             />
           </div>
         </div>
       </div>
 
       {/* Target Result Outputs */}
-      <div className="bg-slate-800/90 rounded-xl p-4 border border-slate-700/80 mb-4">
-        <div className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2.5 flex items-center justify-between flex-wrap gap-2">
+      <div className="bg-slate-900/90 rounded-xl p-4 border border-slate-800 mb-4">
+        <div className="text-xs font-bold text-[#00B69B] uppercase tracking-wider mb-2.5 flex items-center justify-between flex-wrap gap-2">
           <span>Required Funnel Milestones (Based on Current Rates)</span>
           <span className="text-slate-400 font-mono text-[11px]">
             Target: {fmt(effectiveTargetRevenue, 0)} ({formatNumber(results.targetCustomers, 1)} clients)
@@ -146,15 +146,15 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700/60">
+          <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Required Ad Spend</div>
-            <div className="text-base font-bold font-mono text-emerald-400 mt-0.5">
+            <div className="text-base font-bold font-mono text-[#00B69B] mt-0.5">
               {fmt(results.requiredSpend, 0)}
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5">/ month</div>
           </div>
 
-          <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700/60">
+          <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Target Traffic</div>
             <div className="text-base font-bold font-mono text-white mt-0.5">
               {formatNumber(results.requiredTraffic)}
@@ -162,17 +162,17 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
             <div className="text-[10px] text-slate-400 mt-0.5">clicks @ {fmt(inputs.expectedCpc, 2)}</div>
           </div>
 
-          <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700/60">
+          <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Target Leads</div>
-            <div className="text-base font-bold font-mono text-blue-400 mt-0.5">
+            <div className="text-base font-bold font-mono text-teal-300 mt-0.5">
               {formatNumber(results.requiredLeads, 1)}
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5">{formatNumber(results.requiredQualifiedLeads, 1)} SQLs</div>
           </div>
 
-          <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700/60">
+          <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Target ROAS</div>
-            <div className="text-base font-bold font-mono text-blue-400 mt-0.5">
+            <div className="text-base font-bold font-mono text-[#C59A27] mt-0.5">
               {formatMultiplier(results.expectedRoas, 2)}
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5">Return multiple</div>
@@ -191,7 +191,7 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
             onApplySpend(Math.round(results.requiredSpend));
             onClose();
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-colors shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00B69B] hover:bg-[#009e86] text-white transition-colors shrink-0 cursor-pointer shadow-xs"
         >
           <Check className="w-3.5 h-3.5" />
           <span>Apply Spend ({fmt(Math.round(results.requiredSpend), 0)})</span>

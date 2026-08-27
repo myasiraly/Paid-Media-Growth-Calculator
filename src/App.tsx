@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { FunnelInputs, FunnelOutputs, PlatformId } from './types';
 import { calculateFunnel } from './utils/calculations';
+import { exportFunnelToCsv } from './utils/exportCsv';
+import { decodeInputsFromHash, updateBrowserUrlHash } from './utils/urlState';
 import { INDUSTRY_BENCHMARKS } from './data/benchmarks';
 import { getCountry, COUNTRIES } from './data/countries';
 import { AD_PLATFORMS, getPlatform } from './data/platforms';
@@ -34,9 +36,11 @@ import { ClientPitchModal } from './components/ClientPitchModal';
 import { BenchmarkReferenceModal } from './components/BenchmarkReferenceModal';
 import { CountryComparisonModal } from './components/CountryComparisonModal';
 import { AdPlatformComparisonModal } from './components/AdPlatformComparisonModal';
+import { MethodologyExplainerModal } from './components/MethodologyExplainerModal';
+import { GHLArmyLogo } from './components/GHLArmyLogo';
 
 const DEFAULT_INPUTS: FunnelInputs = {
-  monthlyAdSpend: 10000,
+  monthlyAdSpend: 0,
   expectedCpc: 4.50,
   landingPageConversionRate: 8.0,
   leadQualificationRate: 45.0,
@@ -52,14 +56,13 @@ const DEFAULT_INPUTS: FunnelInputs = {
 
 export default function App() {
   const [inputs, setInputs] = useState<FunnelInputs>(() => {
-    try {
-      const saved = localStorage.getItem('paid_media_calc_state');
-      if (saved) {
-        return { ...DEFAULT_INPUTS, ...JSON.parse(saved) };
-      }
-    } catch {
-      // ignore
+    // 1. Check URL hash first (for shared team links)
+    const fromHash = decodeInputsFromHash();
+    if (fromHash && Object.keys(fromHash).length > 0) {
+      return { ...DEFAULT_INPUTS, ...fromHash };
     }
+
+    // 2. Default to zero ad spend
     return DEFAULT_INPUTS;
   });
 
@@ -69,15 +72,30 @@ export default function App() {
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
+  const [isMethodologyModalOpen, setIsMethodologyModalOpen] = useState(false);
 
-  // Save to local storage on change
+  // Save to local storage and update URL hash on change
   useEffect(() => {
     try {
       localStorage.setItem('paid_media_calc_state', JSON.stringify(inputs));
     } catch {
       // ignore
     }
+    updateBrowserUrlHash(inputs);
   }, [inputs]);
+
+  // Listen for browser hash changes (e.g. forward/back button navigation or direct hash edits)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const fromHash = decodeInputsFromHash();
+      if (fromHash && Object.keys(fromHash).length > 0) {
+        setInputs((prev) => ({ ...prev, ...fromHash }));
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Real-time calculation of complete funnel
   const outputs: FunnelOutputs = useMemo(() => {
@@ -149,6 +167,14 @@ export default function App() {
 
   const handleReset = () => {
     setInputs(DEFAULT_INPUTS);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      try {
+        localStorage.removeItem('paid_media_calc_state');
+      } catch {
+        // ignore
+      }
+    }
   };
 
   const handleApplySpend = (spend: number) => {
@@ -163,12 +189,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-blue-200 selection:text-slate-900">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-[#00B69B]/20 selection:text-slate-900">
       {/* App Header */}
       <Header
         inputs={inputs}
         onSelectPreset={handleSelectPreset}
         onReset={handleReset}
+        onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
         onOpenPitchModal={() => setIsPitchModalOpen(true)}
         onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
         onOpenCountryModal={() => setIsCountryModalOpen(true)}
@@ -180,6 +207,7 @@ export default function App() {
         onToggleScenarios={() => setIsScenariosOpen((prev) => !prev)}
         isScenariosOpen={isScenariosOpen}
         onUpdateClientName={(name) => handleInputChange('clientName', name)}
+        onExportCsv={() => exportFunnelToCsv(inputs, outputs)}
       />
 
       {/* Main Container */}
@@ -209,11 +237,11 @@ export default function App() {
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Campaign Conversion Pipeline
+                <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                  <span>Interactive 4-Step Growth Funnel</span>
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Step-by-step unit economics from ad impression to closed client
+                  Follow the step-by-step flow from ad budget down to closed clients and revenue
                 </p>
               </div>
 
@@ -234,7 +262,7 @@ export default function App() {
                   className="text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
                   title="Compare results across 20+ global countries"
                 >
-                  <Globe className="w-3.5 h-3.5 text-blue-600" />
+                  <Globe className="w-3.5 h-3.5 text-[#00927C]" />
                   <span>{currentCountry.flag} {currentCountry.name}</span>
                   <span className="text-[10px] text-slate-500 font-mono">({currentCountry.currency})</span>
                 </button>
@@ -251,6 +279,7 @@ export default function App() {
               onChangeInput={handleInputChange}
               onSelectPlatform={handleSelectPlatform}
               onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
+              onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
             />
           </div>
 
@@ -264,6 +293,7 @@ export default function App() {
               onSelectCountry={handleSelectCountry}
               onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
               onSelectPlatform={handleSelectPlatform}
+              onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
             />
 
             {/* Quick Industry Presets Pill Strip */}
@@ -300,17 +330,17 @@ export default function App() {
             </div>
 
             {/* Sensitivity Quick Insight Card */}
-            <div className="bg-slate-900 text-slate-200 rounded-xl p-4 shadow-xs text-xs space-y-2 border border-slate-800">
+            <div className="bg-[#20223A] text-slate-200 rounded-xl p-4 shadow-xs text-xs space-y-2 border border-slate-800">
               <div className="flex items-center justify-between font-bold text-white">
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#00B69B]" />
                   <span>Growth Sensitivity Levers</span>
                 </span>
-                <span className="text-[10px] text-blue-400 font-mono">{currentCountry.currency} Market</span>
+                <span className="text-[10px] text-[#C59A27] font-mono font-bold bg-[#C59A27]/10 px-2 py-0.5 rounded border border-[#C59A27]/30">{currentCountry.currency} Market</span>
               </div>
               <ul className="space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
                 <li className="flex items-start gap-1.5">
-                  <span className="text-emerald-400 font-bold">1.</span>
+                  <span className="text-[#00B69B] font-bold">1.</span>
                   <span>
                     A <strong className="text-white">+2%</strong> lift in Landing Page CVR adds approximately{' '}
                     <strong className="text-white">
@@ -320,9 +350,9 @@ export default function App() {
                   </span>
                 </li>
                 <li className="flex items-start gap-1.5">
-                  <span className="text-blue-400 font-bold">2.</span>
+                  <span className="text-[#C59A27] font-bold">2.</span>
                   <span>
-                    Current Break-even CAC is <strong className="text-white">{inputs.averageDealSize.toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong>. Your projected CAC of <strong className="text-emerald-400">{Math.round(outputs.cac).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong> yields a healthy <strong className="text-blue-300">{((outputs.cac / Math.max(1, inputs.averageDealSize)) * 100).toFixed(0)}%</strong> CAC-to-revenue ratio in {currentCountry.name}.
+                    Current Break-even CAC is <strong className="text-white">{inputs.averageDealSize.toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong>. Your projected CAC of <strong className="text-[#00B69B]">{Math.round(outputs.cac).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong> yields a healthy <strong className="text-teal-300">{((outputs.cac / Math.max(1, inputs.averageDealSize)) * 100).toFixed(0)}%</strong> CAC-to-revenue ratio in {currentCountry.name}.
                   </span>
                 </li>
               </ul>
@@ -336,9 +366,12 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-4 mt-12 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Paid Media Growth Calculator · Sales Enablement & Country Benchmark Simulator</span>
-          <span className="text-slate-400">Global Deterministic Mathematical Funnel Engine</span>
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <GHLArmyLogo size={20} />
+            <span className="font-semibold text-slate-700">Paid Media Growth Systems & Funnel Architecture</span>
+          </div>
+          <span className="text-slate-400">Multi-Channel Sales Enablement & Unit Economics Calculator</span>
         </div>
       </footer>
 
@@ -385,6 +418,14 @@ export default function App() {
           onClose={() => setIsPlatformModalOpen(false)}
         />
       )}
+
+      {/* Why This Is Reliable / Methodology Proof Modal */}
+      <MethodologyExplainerModal
+        inputs={inputs}
+        outputs={outputs}
+        isOpen={isMethodologyModalOpen}
+        onClose={() => setIsMethodologyModalOpen(false)}
+      />
     </div>
   );
 }
