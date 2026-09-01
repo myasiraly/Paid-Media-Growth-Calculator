@@ -35,12 +35,12 @@ type SortField = 'roas' | 'revenue' | 'cac' | 'customers' | 'cpc' | 'leads';
 
 export const AdPlatformComparisonModal: React.FC<AdPlatformComparisonModalProps> = ({
   inputs,
-  selectedPlatformId = 'google',
+  selectedPlatformId,
   onSelectPlatform,
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'matrix' | 'deep-dive'>('matrix');
-  const [selectedDeepDiveId, setSelectedDeepDiveId] = useState<PlatformId>(selectedPlatformId);
+  const [selectedDeepDiveId, setSelectedDeepDiveId] = useState<PlatformId>(selectedPlatformId || 'google');
   const [sortField, setSortField] = useState<SortField>('roas');
   const [sortAsc, setSortAsc] = useState<boolean>(false);
 
@@ -676,7 +676,7 @@ export const AdPlatformComparisonModal: React.FC<AdPlatformComparisonModalProps>
         {/* Footer */}
         <div className="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between shrink-0">
           <div className="text-xs text-slate-500">
-            Selected Platform: <strong className="text-slate-900">{getPlatform(inputs.platformId || 'google').name}</strong>
+            Active Funnel Platform: <strong className="text-slate-900">{inputs.platformId ? getPlatform(inputs.platformId).name : 'Custom / None Selected'}</strong>
           </div>
           <button
             type="button"

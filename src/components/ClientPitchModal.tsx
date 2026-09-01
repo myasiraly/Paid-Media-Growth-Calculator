@@ -41,23 +41,28 @@ export const ClientPitchModal: React.FC<ClientPitchModalProps> = ({
 }) => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const country = getCountry(inputs.countryCode || 'US');
-  const platform = getPlatform(inputs.platformId || 'google');
+  const platform = inputs.platformId ? getPlatform(inputs.platformId) : null;
   const fmt = (val: number, precision: number = 0) => 
     formatCurrency(val, precision, country.currency, country.locale);
 
+  const isCalculable = Boolean(inputs.platformId && inputs.industry);
+  const isPlatformSelected = Boolean(inputs.platformId);
+  const isIndustrySelected = Boolean(inputs.industry);
   const prospectName = inputs.clientName?.trim() || 'Prospective Client';
-  const industryTag = inputs.industry || 'General';
+  const industryTag = inputs.industry || 'Not Selected';
+  const platformName = platform ? platform.name : 'Not Selected';
+  const platformTag = platform ? `${platform.name} (${platform.audienceIntent})` : 'Paid Media Channel (Select platform)';
 
   const executiveSummaryText = `PAID MEDIA GROWTH FORECAST
 Client: ${prospectName}
-Ad Platform / Channel: ${platform.name} (${platform.audienceIntent})
+Ad Platform / Channel: ${platformTag}
 Target Market / Country: ${country.name} (${country.code})
 Currency: ${country.currency}
 Industry / Vertical: ${industryTag}
 Date: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
 
 ==================================================
-CAMPAIGN FUNNEL BENCHMARKS (${platform.name.toUpperCase()})
+CAMPAIGN FUNNEL BENCHMARKS (${platformName.toUpperCase()})
 ==================================================
 1. Monthly Ad Budget:            ${fmt(inputs.monthlyAdSpend)}
 2. Estimated Unit CPC:           ${fmt(inputs.expectedCpc, 2)}
@@ -79,15 +84,15 @@ CAMPAIGN FUNNEL BENCHMARKS (${platform.name.toUpperCase()})
 ==================================================
 EXECUTIVE SUMMARY & RATIONALE
 ==================================================
-Based on our growth model for ${platform.name} in the ${country.name} market, deploying a monthly budget of ${fmt(inputs.monthlyAdSpend)} is projected to drive ${formatNumber(outputs.expectedTraffic)} high-intent visitors at an average CPC of ${fmt(inputs.expectedCpc, 2)}. At an estimated ${inputs.landingPageConversionRate}% landing page conversion and a ${inputs.leadQualificationRate}% sales qualification rate, this generates ${formatNumber(outputs.qualifiedLeads, 1)} discovery calls per month.
+Based on our growth model for ${platformName} in the ${country.name} market, deploying a monthly budget of ${fmt(inputs.monthlyAdSpend)} is projected to drive ${formatNumber(outputs.expectedTraffic)} high-intent visitors at an average CPC of ${fmt(inputs.expectedCpc, 2)}. At an estimated ${inputs.landingPageConversionRate}% landing page conversion and a ${inputs.leadQualificationRate}% sales qualification rate, this generates ${formatNumber(outputs.qualifiedLeads, 1)} discovery calls per month.
 
 With your team's ${inputs.salesConversionRate}% closing rate, this translates into ${formatNumber(outputs.customers, 1)} new paying clients per month at an acquisition cost (CAC) of ${fmt(outputs.cac, 0)}. Against an average deal value of ${fmt(inputs.averageDealSize)}, this generates ${fmt(outputs.revenue, 0)} in new monthly revenue, delivering a ${formatMultiplier(outputs.roas, 2)} Return On Ad Spend (ROAS).`;
 
   const emailRecapText = `Hi ${prospectName.split(' ')[0] || 'there'},
 
-Great speaking with you today! As discussed, here is the paid media growth model we walked through for your campaign on ${platform.name} in ${country.name}:
+Great speaking with you today! As discussed, here is the paid media growth model we walked through for your campaign on ${platformName} in ${country.name}:
 
-- Primary Channel: ${platform.name} (${platform.audienceIntent})
+- Primary Channel: ${platformTag}
 - Target Market: ${country.flag} ${country.name} (${country.currency})
 - Monthly Ad Spend: ${fmt(inputs.monthlyAdSpend)}
 - Targeted Clicks: ~${formatNumber(outputs.expectedTraffic)} visitors (@ ${fmt(inputs.expectedCpc, 2)} CPC)
@@ -143,23 +148,35 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
         {/* Modal Content */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
           
+          {!isCalculable && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium">
+              {!isIndustrySelected && !isPlatformSelected ? (
+                <span>⚠️ <strong>Industry & Platform selection required:</strong> Select both an industry benchmark preset and an advertising platform to generate live projections.</span>
+              ) : !isIndustrySelected ? (
+                <span>⚠️ <strong>Industry selection required:</strong> Select an industry benchmark preset to generate live projections.</span>
+              ) : (
+                <span>⚠️ <strong>Platform selection required:</strong> Select an advertising platform to generate live projections.</span>
+              )}
+            </div>
+          )}
+
           {/* Key Metrics Quick Ribbon */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Monthly Spend</div>
-              <div className="text-sm font-bold font-mono text-slate-900">{fmt(inputs.monthlyAdSpend)}</div>
+              <div className="text-sm font-bold font-mono text-slate-900">{isCalculable ? fmt(inputs.monthlyAdSpend) : '--'}</div>
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Closed Deals</div>
-              <div className="text-sm font-bold font-mono text-slate-900">{formatNumber(outputs.customers, 1)} clients</div>
+              <div className="text-sm font-bold font-mono text-slate-900">{isCalculable ? `${formatNumber(outputs.customers, 1)} clients` : '--'}</div>
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Projected Revenue</div>
-              <div className="text-sm font-bold font-mono text-emerald-700">{fmt(outputs.revenue, 0)}</div>
+              <div className="text-sm font-bold font-mono text-emerald-700">{isCalculable ? fmt(outputs.revenue, 0) : '--'}</div>
             </div>
             <div>
               <div className="text-[11px] text-slate-500 font-medium">Projected ROAS</div>
-              <div className="text-sm font-black font-mono text-[#00B69B]">{formatMultiplier(outputs.roas, 2)}</div>
+              <div className="text-sm font-black font-mono text-[#00B69B]">{isCalculable ? formatMultiplier(outputs.roas, 2) : '--'}</div>
             </div>
           </div>
 

@@ -23,7 +23,7 @@ export function exportFunnelToCsv(
   outputs: FunnelOutputs
 ): void {
   const country = getCountry(inputs.countryCode || 'US');
-  const platform = getPlatform(inputs.platformId || 'google');
+  const platform = inputs.platformId ? getPlatform(inputs.platformId) : null;
   const clientName = inputs.clientName ? inputs.clientName.trim() : 'Prospective Client';
   const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -32,7 +32,7 @@ export function exportFunnelToCsv(
     ['PAID MEDIA GROWTH FUNNEL & CLIENT SALES REPORT'],
     ['Generated On', timestamp],
     ['Client / Prospect Name', clientName],
-    ['Ad Platform / Primary Channel', `${platform.name} (${platform.audienceIntent})`],
+    ['Ad Platform / Primary Channel', platform ? `${platform.name} (${platform.audienceIntent})` : 'Custom / Multi-Channel'],
     ['Target Market / Country', `${country.name} (${country.code})`],
     ['Currency', `${country.currency} (${country.currencySymbol})`],
     ['Industry Vertical', inputs.industry || 'General'],

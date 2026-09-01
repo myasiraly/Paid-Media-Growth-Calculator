@@ -24,9 +24,9 @@ import { FunnelInputs, FunnelOutputs, PlatformId } from './types';
 import { calculateFunnel } from './utils/calculations';
 import { exportFunnelToCsv } from './utils/exportCsv';
 import { decodeInputsFromHash, updateBrowserUrlHash } from './utils/urlState';
-import { INDUSTRY_BENCHMARKS } from './data/benchmarks';
+import { INDUSTRY_BENCHMARKS, findBenchmark, getBenchmark } from './data/benchmarks';
 import { getCountry, COUNTRIES } from './data/countries';
-import { AD_PLATFORMS, getPlatform } from './data/platforms';
+import { AD_PLATFORMS, getPlatform, inferPlatformIdFromChannel } from './data/platforms';
 import { Header } from './components/Header';
 import { FunnelFlowView } from './components/FunnelFlowView';
 import { SummaryMetricsGrid } from './components/SummaryMetricsGrid';
@@ -37,21 +37,24 @@ import { BenchmarkReferenceModal } from './components/BenchmarkReferenceModal';
 import { CountryComparisonModal } from './components/CountryComparisonModal';
 import { AdPlatformComparisonModal } from './components/AdPlatformComparisonModal';
 import { MethodologyExplainerModal } from './components/MethodologyExplainerModal';
+import { GrowthTipSidebar } from './components/GrowthTipSidebar';
 import { GHLArmyLogo } from './components/GHLArmyLogo';
 
 const DEFAULT_INPUTS: FunnelInputs = {
-  monthlyAdSpend: 0,
-  expectedCpc: 4.50,
-  landingPageConversionRate: 8.0,
-  leadQualificationRate: 45.0,
-  salesConversionRate: 25.0,
-  averageDealSize: 4500,
+  monthlyAdSpend: 5000,
+  expectedCpc: 0,
+  landingPageConversionRate: 0,
+  leadQualificationRate: 0,
+  salesConversionRate: 0,
+  averageDealSize: 2500,
   grossMarginRate: 80,
   clientName: '',
-  industry: 'B2B SaaS & Tech',
-  channel: 'Google Ads (Search & PMax)',
+  industry: '',
+  channel: '',
   countryCode: 'US',
-  platformId: 'google',
+  platformId: undefined,
+  targetGoalType: undefined,
+  targetGoalValue: undefined,
 };
 
 export default function App() {
@@ -62,10 +65,10 @@ export default function App() {
       return { ...DEFAULT_INPUTS, ...fromHash };
     }
 
-    // 2. Default to zero ad spend
     return DEFAULT_INPUTS;
   });
 
+  const [viewMode, setViewMode] = useState<'simple' | 'expert'>('simple');
   const [isGoalSeekerOpen, setIsGoalSeekerOpen] = useState(false);
   const [isScenariosOpen, setIsScenariosOpen] = useState(false);
   const [isPitchModalOpen, setIsPitchModalOpen] = useState(false);
@@ -107,7 +110,7 @@ export default function App() {
   }, [inputs.countryCode]);
 
   const currentPlatform = useMemo(() => {
-    return getPlatform(inputs.platformId || 'google');
+    return inputs.platformId ? getPlatform(inputs.platformId) : null;
   }, [inputs.platformId]);
 
   const handleInputChange = <K extends keyof FunnelInputs>(key: K, value: FunnelInputs[K]) => {
@@ -117,7 +120,8 @@ export default function App() {
     }));
   };
 
-  const handleSelectCountry = (countryCode: string) => {
+  const handleSelectCountry = (countryInput: string | { code: string }) => {
+    const countryCode = typeof countryInput === 'string' ? countryInput : countryInput.code;
     const prevCountry = getCountry(inputs.countryCode || 'US');
     const newCountry = getCountry(countryCode);
     
@@ -127,41 +131,80 @@ export default function App() {
 
     setInputs((prev) => ({
       ...prev,
-      countryCode,
+      countryCode: newCountry.code,
       expectedCpc: Math.max(0.05, adjustedCpc),
     }));
   };
 
-  const handleSelectPlatform = (platformId: PlatformId) => {
+  const handleSelectPlatform = (platformId: PlatformId | string) => {
+    if (!platformId || platformId === 'none') {
+      setInputs((prev) => ({
+        ...prev,
+        platformId: undefined,
+        channel: '',
+      }));
+      return;
+    }
     const platform = getPlatform(platformId);
     const country = getCountry(inputs.countryCode || 'US');
-    const scaledCpc = Number((platform.recommendedDefaults.expectedCpc * country.cpcIndex).toFixed(2));
 
-    setInputs((prev) => ({
-      ...prev,
-      platformId,
-      channel: platform.name,
-      expectedCpc: Math.max(0.05, scaledCpc),
-      landingPageConversionRate: platform.recommendedDefaults.landingPageConversionRate,
-      leadQualificationRate: platform.recommendedDefaults.leadQualificationRate,
-      salesConversionRate: platform.recommendedDefaults.salesConversionRate,
-    }));
+    setInputs((prev) => {
+      const benchmark = findBenchmark(prev.industry);
+      if (benchmark) {
+        const baseCpc = benchmark.defaults.expectedCpc;
+        const scaledCpc = Number((baseCpc * (platform.recommendedDefaults.expectedCpc / 3.8) * country.cpcIndex).toFixed(2));
+        return {
+          ...prev,
+          platformId: platform.id,
+          channel: platform.name,
+          expectedCpc: Math.max(0.10, scaledCpc),
+          landingPageConversionRate: benchmark.defaults.landingPageConversionRate,
+          leadQualificationRate: benchmark.defaults.leadQualificationRate,
+          salesConversionRate: benchmark.defaults.salesConversionRate,
+          averageDealSize: benchmark.defaults.averageDealSize,
+        };
+      }
+
+      const scaledCpc = Number((platform.recommendedDefaults.expectedCpc * country.cpcIndex).toFixed(2));
+      return {
+        ...prev,
+        platformId: platform.id,
+        channel: platform.name,
+        expectedCpc: Math.max(0.10, scaledCpc),
+        landingPageConversionRate: platform.recommendedDefaults.landingPageConversionRate,
+        leadQualificationRate: platform.recommendedDefaults.leadQualificationRate,
+        salesConversionRate: platform.recommendedDefaults.salesConversionRate,
+      };
+    });
   };
 
   const handleSelectPreset = (presetId: string) => {
-    const preset = INDUSTRY_BENCHMARKS.find((b) => b.id === presetId);
-    if (preset) {
-      const country = getCountry(inputs.countryCode || 'US');
-      const scaledCpc = Number((preset.defaults.expectedCpc * country.cpcIndex).toFixed(2));
-      
+    if (!presetId || presetId === 'none' || presetId === 'custom') {
       setInputs((prev) => ({
         ...prev,
-        ...preset.defaults,
-        expectedCpc: scaledCpc,
-        countryCode: prev.countryCode, // preserve active country
-        platformId: prev.platformId, // preserve active platform
-        clientName: prev.clientName, // preserve client name
+        industry: '',
       }));
+      return;
+    }
+    const preset = findBenchmark(presetId);
+    if (preset) {
+      const country = getCountry(inputs.countryCode || 'US');
+      setInputs((prev) => {
+        const platform = prev.platformId ? getPlatform(prev.platformId) : null;
+        const multiplier = platform ? (platform.recommendedDefaults.expectedCpc / 3.8) : 1.0;
+        const scaledCpc = Number((preset.defaults.expectedCpc * multiplier * country.cpcIndex).toFixed(2));
+
+        return {
+          ...prev,
+          ...preset.defaults,
+          expectedCpc: Math.max(0.10, scaledCpc),
+          countryCode: prev.countryCode,
+          platformId: prev.platformId,
+          channel: prev.platformId && platform ? platform.name : '',
+          clientName: prev.clientName,
+          monthlyAdSpend: prev.monthlyAdSpend || 5000,
+        };
+      });
     }
   };
 
@@ -252,8 +295,17 @@ export default function App() {
                   className="text-xs font-bold text-slate-900 bg-white hover:bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
                   title="Compare Meta, Google, LinkedIn, Twitter, Snapchat, TikTok estimations"
                 >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentPlatform.brandColor }} />
-                  <span>{currentPlatform.name}</span>
+                  {currentPlatform ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentPlatform.brandColor }} />
+                      <span>{currentPlatform.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-2 h-2 rounded-full shrink-0 bg-[#00B69B] animate-pulse" />
+                      <span>Compare Platforms (6)</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -280,6 +332,11 @@ export default function App() {
               onSelectPlatform={handleSelectPlatform}
               onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
               onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
+              onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
+              onSelectPreset={handleSelectPreset}
+              onApplyScenario={handleApplyScenario}
+              viewMode={viewMode}
+              onToggleViewMode={setViewMode}
             />
           </div>
 
@@ -294,40 +351,18 @@ export default function App() {
               onOpenPlatformModal={() => setIsPlatformModalOpen(true)}
               onSelectPlatform={handleSelectPlatform}
               onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
+              onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
+              onSelectPreset={handleSelectPreset}
             />
 
-            {/* Quick Industry Presets Pill Strip */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Quick Benchmark Presets
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsBenchmarkModalOpen(true)}
-                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
-                >
-                  View All Specs →
-                </button>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5">
-                {INDUSTRY_BENCHMARKS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => handleSelectPreset(preset.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                      inputs.industry === preset.name
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200'
-                    }`}
-                  >
-                    {preset.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Dynamic Industry Growth Tip & Conversion Playbook Sidebar */}
+            <GrowthTipSidebar
+              inputs={inputs}
+              outputs={outputs}
+              onSelectIndustry={handleSelectPreset}
+              onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
+              onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
+            />
 
             {/* Sensitivity Quick Insight Card */}
             <div className="bg-[#20223A] text-slate-200 rounded-xl p-4 shadow-xs text-xs space-y-2 border border-slate-800">
@@ -338,24 +373,30 @@ export default function App() {
                 </span>
                 <span className="text-[10px] text-[#C59A27] font-mono font-bold bg-[#C59A27]/10 px-2 py-0.5 rounded border border-[#C59A27]/30">{currentCountry.currency} Market</span>
               </div>
-              <ul className="space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
-                <li className="flex items-start gap-1.5">
-                  <span className="text-[#00B69B] font-bold">1.</span>
-                  <span>
-                    A <strong className="text-white">+2%</strong> lift in Landing Page CVR adds approximately{' '}
-                    <strong className="text-white">
-                      +{((outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100))).toFixed(1)} new clients
-                    </strong>{' '}
-                    ({((outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100) * inputs.averageDealSize)).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })} revenue) without spending an extra dollar on ads.
-                  </span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-[#C59A27] font-bold">2.</span>
-                  <span>
-                    Current Break-even CAC is <strong className="text-white">{inputs.averageDealSize.toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong>. Your projected CAC of <strong className="text-[#00B69B]">{Math.round(outputs.cac).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong> yields a healthy <strong className="text-teal-300">{((outputs.cac / Math.max(1, inputs.averageDealSize)) * 100).toFixed(0)}%</strong> CAC-to-revenue ratio in {currentCountry.name}.
-                  </span>
-                </li>
-              </ul>
+              {inputs.industry && inputs.platformId ? (
+                <ul className="space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-[#00B69B] font-bold">1.</span>
+                    <span>
+                      A <strong className="text-white">+2%</strong> lift in Landing Page CVR adds approximately{' '}
+                      <strong className="text-white">
+                        +{((outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100))).toFixed(1)} new clients
+                      </strong>{' '}
+                      ({((outputs.expectedTraffic * 0.02 * (inputs.leadQualificationRate / 100) * (inputs.salesConversionRate / 100) * inputs.averageDealSize)).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })} revenue) without spending an extra dollar on ads.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-[#C59A27] font-bold">2.</span>
+                    <span>
+                      Current Break-even CAC is <strong className="text-white">{inputs.averageDealSize.toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong>. Your projected CAC of <strong className="text-[#00B69B]">{Math.round(outputs.cac).toLocaleString(currentCountry.locale, { style: 'currency', currency: currentCountry.currency, maximumFractionDigits: 0 })}</strong> yields a healthy <strong className="text-teal-300">{((outputs.cac / Math.max(1, inputs.averageDealSize)) * 100).toFixed(0)}%</strong> CAC-to-revenue ratio in {currentCountry.name}.
+                    </span>
+                  </li>
+                </ul>
+              ) : (
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Select your <strong className="text-white">Industry (Step 1)</strong> and <strong className="text-white">Ad Platform (Step 2)</strong> above to activate real-time sensitivity levers and conversion impact modeling.
+                </p>
+              )}
             </div>
 
           </div>
@@ -398,9 +439,8 @@ export default function App() {
       {isCountryModalOpen && (
         <CountryComparisonModal
           inputs={inputs}
-          selectedCountryCode={inputs.countryCode || 'US'}
-          onSelectCountry={(code) => {
-            handleSelectCountry(code);
+          onSelectCountry={(country) => {
+            handleSelectCountry(country.code);
             setIsCountryModalOpen(false);
           }}
           onClose={() => setIsCountryModalOpen(false)}
@@ -410,7 +450,7 @@ export default function App() {
       {isPlatformModalOpen && (
         <AdPlatformComparisonModal
           inputs={inputs}
-          selectedPlatformId={inputs.platformId || 'google'}
+          selectedPlatformId={inputs.platformId}
           onSelectPlatform={(platId) => {
             handleSelectPlatform(platId);
             setIsPlatformModalOpen(false);

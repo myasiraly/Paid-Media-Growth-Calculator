@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
 import { 
-  Calculator, 
-  TrendingUp, 
-  Sparkles, 
   RotateCcw, 
   Share2, 
-  Target, 
   BookOpen, 
-  Layers,
   Building2,
   Globe,
-  Radio,
   Download,
   Check,
   Link2,
   ShieldCheck
 } from 'lucide-react';
-import { INDUSTRY_BENCHMARKS, getBenchmarkCategories } from '../data/benchmarks';
+import { INDUSTRY_BENCHMARKS, getBenchmarkCategories, findBenchmark } from '../data/benchmarks';
 import { COUNTRIES, getCountry } from '../data/countries';
 import { AD_PLATFORMS, getPlatform } from '../data/platforms';
 import { FunnelInputs, CountryConfig, PlatformId } from '../types';
@@ -28,16 +22,16 @@ interface HeaderProps {
   onSelectPreset: (presetId: string) => void;
   onSelectCountry: (countryCode: string) => void;
   onOpenCountryModal: () => void;
-  onSelectPlatform: (platformId: PlatformId) => void;
+  onSelectPlatform: (platformId: PlatformId | string) => void;
   onOpenPlatformModal: () => void;
   onReset: () => void;
   onOpenMethodologyModal?: () => void;
   onOpenPitchModal: () => void;
   onOpenBenchmarkModal: () => void;
-  onToggleGoalSeeker: () => void;
-  isGoalSeekerOpen: boolean;
-  onToggleScenarios: () => void;
-  isScenariosOpen: boolean;
+  onToggleGoalSeeker?: () => void;
+  isGoalSeekerOpen?: boolean;
+  onToggleScenarios?: () => void;
+  isScenariosOpen?: boolean;
   onUpdateClientName: (name: string) => void;
   onExportCsv: () => void;
 }
@@ -63,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isExported, setIsExported] = useState(false);
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const currentCountry = getCountry(inputs.countryCode || 'US');
-  const currentPlatform = getPlatform(inputs.platformId || 'google');
+  const currentPlatform = inputs.platformId ? getPlatform(inputs.platformId) : null;
 
   const handleExport = () => {
     onExportCsv();
@@ -100,14 +94,42 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>{currentCountry.flag}</span>
                   <span>{currentCountry.currency}</span>
                 </span>
-                <span 
-                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-white shadow-2xs cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={onOpenPlatformModal}
-                  title="Click to compare authentic platform estimations"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentPlatform.brandColor }} />
-                  <span>{currentPlatform.name}</span>
-                </span>
+                {inputs.industry ? (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#00B69B]/15 text-[#00927C] border border-[#00B69B]/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00B69B]" />
+                    <span>{inputs.industry}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenBenchmarkModal}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors cursor-pointer"
+                    title="Click to select an industry benchmark to enable calculations"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span>Select Industry (Required)</span>
+                  </button>
+                )}
+                {currentPlatform ? (
+                  <span 
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-white shadow-2xs cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={onOpenPlatformModal}
+                    title="Click to compare authentic platform estimations"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentPlatform.brandColor }} />
+                    <span>{currentPlatform.name}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenPlatformModal}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors cursor-pointer"
+                    title="Click to select an advertising platform to generate estimations"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span>Select Platform (Required)</span>
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
                 <span className="font-medium text-slate-600">Prospect:</span>
@@ -130,15 +152,22 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative flex items-center">
               <span 
                 className="w-2.5 h-2.5 rounded-full absolute left-2.5 pointer-events-none"
-                style={{ backgroundColor: getPlatform(inputs.platformId || 'google').brandColor }}
+                style={{ 
+                  backgroundColor: inputs.platformId ? getPlatform(inputs.platformId).brandColor : '#F59E0B' 
+                }}
               />
               <select
                 id="platform-select-header"
-                value={inputs.platformId || 'google'}
+                value={inputs.platformId || 'none'}
                 onChange={(e) => onSelectPlatform(e.target.value as PlatformId)}
-                className="pl-7 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00B69B] focus:border-[#00B69B] transition-colors cursor-pointer appearance-none"
-                title="Select Advertising Platform"
+                className={`pl-7 pr-7 py-1.5 text-xs font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B69B] transition-all cursor-pointer appearance-none ${
+                  inputs.platformId 
+                    ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200' 
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-2 border-amber-400 font-bold shadow-xs'
+                }`}
+                title="Select Advertising Platform to calculate numbers"
               >
+                <option value="none">⚠️ Select Platform (Required)</option>
                 {AD_PLATFORMS.map((plat) => (
                   <option key={plat.id} value={plat.id}>
                     {plat.name} ({plat.shortName})
@@ -154,10 +183,10 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onOpenPlatformModal}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition-colors cursor-pointer shadow-2xs"
-              title="Compare authentic estimations for Meta, Google, LinkedIn, Twitter, Snapchat, TikTok"
+              title="Click to compare authentic platform estimations for Google, Meta, LinkedIn, X, Snapchat & TikTok"
             >
               <span className="w-2 h-2 rounded-full bg-[#00B69B] animate-pulse" />
-              <span>Compare (6)</span>
+              <span>Compare Platforms (6)</span>
             </button>
 
             {/* Country / Market Selector */}
@@ -193,18 +222,19 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Industry Preset Selector */}
             <div className="relative flex items-center">
-              <Building2 className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+              <Building2 className={`w-3.5 h-3.5 absolute left-2.5 pointer-events-none ${inputs.industry ? 'text-slate-400' : 'text-amber-600'}`} />
               <select
                 id="industry-preset-select"
-                value={
-                  INDUSTRY_BENCHMARKS.find((b) => b.name === inputs.industry)?.id ||
-                  'custom'
-                }
+                value={findBenchmark(inputs.industry)?.id || 'none'}
                 onChange={(e) => onSelectPreset(e.target.value)}
-                className="pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00B69B] focus:border-[#00B69B] transition-colors cursor-pointer appearance-none max-w-[200px] truncate"
-                title="Select benchmark preset from 50+ specialized industries"
+                className={`pl-8 pr-7 py-1.5 text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B69B] transition-all cursor-pointer appearance-none max-w-[200px] truncate ${
+                  inputs.industry
+                    ? 'bg-slate-50 hover:bg-slate-100 font-semibold text-slate-800 border border-slate-200'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-2 border-amber-400 font-bold shadow-xs'
+                }`}
+                title="Select benchmark preset from 60+ specialized industries (Required for calculations)"
               >
-                <option value="custom" disabled>Select Industry ({INDUSTRY_BENCHMARKS.length})</option>
+                <option value="none">⚠️ Select Industry (Required)</option>
                 {getBenchmarkCategories().map((cat) => (
                   <optgroup key={cat} label={cat}>
                     {INDUSTRY_BENCHMARKS.filter((b) => b.category === cat).map((benchmark) => (
@@ -217,36 +247,6 @@ export const Header: React.FC<HeaderProps> = ({
               </select>
               <div className="absolute right-2.5 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
-
-            {/* Reverse Engineer Goal Seeker Button */}
-            <button
-              id="goal-seeker-toggle-btn"
-              onClick={onToggleGoalSeeker}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                isGoalSeekerOpen
-                  ? 'bg-[#00B69B] text-white shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-              title="Reverse engineer required ad spend from a target revenue or customer goal"
-            >
-              <Target className="w-3.5 h-3.5" />
-              <span>Goal Target</span>
-            </button>
-
-            {/* Scenarios Comparison Button */}
-            <button
-              id="scenarios-toggle-btn"
-              onClick={onToggleScenarios}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                isScenariosOpen
-                  ? 'bg-[#20223A] text-white shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-              title="Compare Conservative, Realistic, and Aggressive campaign scenarios"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>3 Scenarios</span>
-            </button>
 
             {/* Industry Benchmarks Guide */}
             <button

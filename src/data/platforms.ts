@@ -290,6 +290,20 @@ export function getPlatform(id: string): AdPlatform {
 }
 
 /**
+ * Infers the best primary advertising platform from an industry's channel recommendation.
+ */
+export function inferPlatformIdFromChannel(channel?: string): PlatformId {
+  if (!channel) return 'google';
+  const c = channel.toLowerCase();
+  if (c.startsWith('linkedin') || (c.includes('linkedin') && !c.startsWith('google') && !c.startsWith('meta'))) return 'linkedin';
+  if (c.startsWith('meta') || c.startsWith('instagram') || c.includes('facebook') || (c.includes('meta') && !c.startsWith('google'))) return 'meta';
+  if (c.startsWith('tiktok') || c.includes('tiktok')) return 'tiktok';
+  if (c.startsWith('snapchat') || c.includes('snapchat')) return 'snapchat';
+  if (c.startsWith('x ') || c.includes('twitter') || c.includes(' x ')) return 'twitter';
+  return 'google';
+}
+
+/**
  * Calculates a complete funnel estimation for a specific ad platform,
  * adjusting the platform's baseline benchmark CPC by the active country's regional CPC index.
  */

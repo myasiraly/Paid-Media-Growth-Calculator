@@ -60,6 +60,8 @@ export interface FunnelInputs {
   channel?: string;
   platformId?: PlatformId; // 'google' | 'meta' | 'linkedin' | 'twitter' | 'snapchat' | 'tiktok'
   countryCode?: string; // e.g. 'US', 'GB', 'CA', 'AU', 'DE', etc.
+  targetGoalType?: 'revenue' | 'customers'; // 'revenue' | 'customers'
+  targetGoalValue?: number; // e.g. 30000 ($30k revenue) or 10 (10 clients)
 }
 
 export interface FunnelOutputs {

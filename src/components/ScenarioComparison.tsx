@@ -30,6 +30,9 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
   onClose,
 }) => {
   const country = getCountry(inputs.countryCode || 'US');
+  const isCalculable = Boolean(inputs.platformId && inputs.industry);
+  const isPlatformSelected = Boolean(inputs.platformId);
+  const isIndustrySelected = Boolean(inputs.industry);
   const fmt = (val: number, precision: number = 0) => 
     formatCurrency(val, precision, country.currency, country.locale);
 
@@ -114,6 +117,18 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
         </div>
       </div>
 
+      {!isCalculable && (
+        <div className="p-3 mb-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 font-medium">
+          {!isIndustrySelected && !isPlatformSelected ? (
+            <span>⚠️ <strong>Industry and Platform required:</strong> Projections and calculated metrics are withheld until both an industry benchmark and primary ad platform are selected.</span>
+          ) : !isIndustrySelected ? (
+            <span>⚠️ <strong>Industry benchmark required:</strong> Projections and calculated metrics are withheld until an industry benchmark is selected.</span>
+          ) : (
+            <span>⚠️ <strong>Advertising platform required:</strong> Projections and calculated metrics are withheld until a primary platform is selected.</span>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         {scenarios.map((sc, idx) => (
           <div
@@ -138,35 +153,51 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
             <div className="space-y-2 bg-white rounded-lg p-3 border border-slate-200/80 mb-3 text-xs">
               <div className="flex justify-between items-center text-slate-600">
                 <span>Monthly Ad Spend</span>
-                <span className="font-mono font-bold text-slate-900">{fmt(sc.inputs.monthlyAdSpend)}</span>
+                <span className="font-mono font-bold text-slate-900">
+                  {isCalculable ? fmt(sc.inputs.monthlyAdSpend) : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Expected Traffic</span>
-                <span className="font-mono">{formatNumber(sc.outputs.expectedTraffic)} clicks</span>
+                <span className="font-mono">
+                  {isCalculable ? `${formatNumber(sc.outputs.expectedTraffic)} clicks` : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Total Leads</span>
-                <span className="font-mono">{formatNumber(sc.outputs.leads, 1)} leads</span>
+                <span className="font-mono">
+                  {isCalculable ? `${formatNumber(sc.outputs.leads, 1)} leads` : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Qualified Opportunities</span>
-                <span className="font-mono">{formatNumber(sc.outputs.qualifiedLeads, 1)} SQLs</span>
+                <span className="font-mono">
+                  {isCalculable ? `${formatNumber(sc.outputs.qualifiedLeads, 1)} SQLs` : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600 pt-1.5 border-t border-slate-100">
                 <span className="font-semibold text-slate-900">New Customers</span>
-                <span className="font-mono font-bold text-slate-900">{formatNumber(sc.outputs.customers, 1)}</span>
+                <span className="font-mono font-bold text-slate-900">
+                  {isCalculable ? formatNumber(sc.outputs.customers, 1) : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Customer Acquisition Cost</span>
-                <span className="font-mono font-bold text-slate-900">{fmt(sc.outputs.cac, 0)}</span>
+                <span className="font-mono font-bold text-slate-900">
+                  {isCalculable ? fmt(sc.outputs.cac, 0) : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span className="font-semibold text-emerald-900">Projected Revenue</span>
-                <span className="font-mono font-bold text-emerald-800">{fmt(sc.outputs.revenue, 0)}</span>
+                <span className="font-mono font-bold text-emerald-800">
+                  {isCalculable ? fmt(sc.outputs.revenue, 0) : '--'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600 pt-1.5 border-t border-slate-100">
                 <span className="font-bold text-blue-900">Expected ROAS</span>
-                <span className="font-mono font-black text-blue-900 text-sm">{formatMultiplier(sc.outputs.roas, 2)}</span>
+                <span className="font-mono font-black text-blue-900 text-sm">
+                  {isCalculable ? formatMultiplier(sc.outputs.roas, 2) : '--'}
+                </span>
               </div>
             </div>
 

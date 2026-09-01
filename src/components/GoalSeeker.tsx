@@ -42,7 +42,19 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
     ? targetRevenue 
     : targetCustomers * Math.max(1, inputs.averageDealSize);
 
-  const results = calculateRequiredSpend(effectiveTargetRevenue, inputs);
+  const isCalculable = Boolean(inputs.platformId && inputs.industry);
+  const isPlatformSelected = Boolean(inputs.platformId);
+  const isIndustrySelected = Boolean(inputs.industry);
+
+  const results = isCalculable 
+    ? calculateRequiredSpend(effectiveTargetRevenue, inputs)
+    : { requiredSpend: 0, requiredTraffic: 0, requiredLeads: 0, requiredQualifiedLeads: 0, targetCustomers: 0, expectedRoas: 0 };
+
+  const getMissingPrompt = () => {
+    if (!isIndustrySelected && !isPlatformSelected) return 'Select Industry & Platform';
+    if (!isIndustrySelected) return 'Select Industry';
+    return 'Select Platform';
+  };
 
   return (
     <div className="bg-[#20223A] text-white border border-slate-800 rounded-xl p-5 shadow-lg relative">
@@ -149,33 +161,33 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
           <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Required Ad Spend</div>
             <div className="text-base font-bold font-mono text-[#00B69B] mt-0.5">
-              {fmt(results.requiredSpend, 0)}
+              {isCalculable ? fmt(results.requiredSpend, 0) : '--'}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">/ month</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{isCalculable ? '/ month' : getMissingPrompt()}</div>
           </div>
 
           <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Target Traffic</div>
             <div className="text-base font-bold font-mono text-white mt-0.5">
-              {formatNumber(results.requiredTraffic)}
+              {isCalculable ? formatNumber(results.requiredTraffic) : '--'}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">clicks @ {fmt(inputs.expectedCpc, 2)}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{isCalculable ? `clicks @ ${fmt(inputs.expectedCpc, 2)}` : getMissingPrompt()}</div>
           </div>
 
           <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Target Leads</div>
             <div className="text-base font-bold font-mono text-teal-300 mt-0.5">
-              {formatNumber(results.requiredLeads, 1)}
+              {isCalculable ? formatNumber(results.requiredLeads, 1) : '--'}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">{formatNumber(results.requiredQualifiedLeads, 1)} SQLs</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{isCalculable ? `${formatNumber(results.requiredQualifiedLeads, 1)} SQLs` : getMissingPrompt()}</div>
           </div>
 
           <div className="bg-[#20223A] p-2.5 rounded-lg border border-slate-700/60">
             <div className="text-[10px] text-slate-400 uppercase font-semibold">Target ROAS</div>
             <div className="text-base font-bold font-mono text-[#C59A27] mt-0.5">
-              {formatMultiplier(results.expectedRoas, 2)}
+              {isCalculable ? formatMultiplier(results.expectedRoas, 2) : '--'}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Return multiple</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{isCalculable ? 'Return multiple' : getMissingPrompt()}</div>
           </div>
         </div>
       </div>
@@ -183,18 +195,32 @@ export const GoalSeeker: React.FC<GoalSeekerProps> = ({
       {/* Action to Apply */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="text-xs text-slate-400">
-          Want to simulate this campaign? Load <strong>{fmt(Math.round(results.requiredSpend), 0)}</strong> spend into the main funnel.
+          {isCalculable ? (
+            <span>Want to simulate this campaign? Load <strong>{fmt(Math.round(results.requiredSpend), 0)}</strong> spend into the main funnel.</span>
+          ) : !isIndustrySelected && !isPlatformSelected ? (
+            <span className="text-amber-300">⚠️ Please select an industry and an advertising platform to calculate required spend.</span>
+          ) : !isIndustrySelected ? (
+            <span className="text-amber-300">⚠️ Please select an industry benchmark to calculate required spend.</span>
+          ) : (
+            <span className="text-amber-300">⚠️ Please select an advertising platform to calculate required spend.</span>
+          )}
         </div>
         <button
           type="button"
+          disabled={!isCalculable}
           onClick={() => {
+            if (!isCalculable) return;
             onApplySpend(Math.round(results.requiredSpend));
             onClose();
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00B69B] hover:bg-[#009e86] text-white transition-colors shrink-0 cursor-pointer shadow-xs"
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer shadow-xs ${
+            isCalculable
+              ? 'bg-[#00B69B] hover:bg-[#009e86] text-white'
+              : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+          }`}
         >
           <Check className="w-3.5 h-3.5" />
-          <span>Apply Spend ({fmt(Math.round(results.requiredSpend), 0)})</span>
+          <span>Apply Spend {isCalculable ? `(${fmt(Math.round(results.requiredSpend), 0)})` : ''}</span>
         </button>
       </div>
     </div>

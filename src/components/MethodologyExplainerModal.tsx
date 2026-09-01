@@ -35,6 +35,7 @@ export const MethodologyExplainerModal: React.FC<MethodologyExplainerModalProps>
   if (!isOpen) return null;
 
   const country = getCountry(inputs.countryCode || 'US');
+  const isCalculable = Boolean(inputs.industry && inputs.platformId && inputs.expectedCpc > 0);
   const fmt = (val: number, precision: number = 0) => 
     formatCurrency(val, precision, country.currency, country.locale);
 
@@ -117,42 +118,49 @@ export const MethodologyExplainerModal: React.FC<MethodologyExplainerModalProps>
               <span className="text-[10px] font-mono text-slate-400">Verify on any pocket calculator</span>
             </div>
 
-            <div className="space-y-2 text-xs font-mono text-slate-300">
-              <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
-                <span className="text-slate-400">Step 1: Visitors</span>
-                <span className="text-white">
-                  {fmt(inputs.monthlyAdSpend)} Budget ÷ {fmt(inputs.expectedCpc, 2)} CPC = <strong>{formatNumber(outputs.expectedTraffic)} Visitors</strong>
-                </span>
-              </div>
+            {isCalculable ? (
+              <div className="space-y-2 text-xs font-mono text-slate-300">
+                <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
+                  <span className="text-slate-400">Step 1: Visitors</span>
+                  <span className="text-white">
+                    {fmt(inputs.monthlyAdSpend)} Budget ÷ {fmt(inputs.expectedCpc, 2)} CPC = <strong>{formatNumber(outputs.expectedTraffic)} Visitors</strong>
+                  </span>
+                </div>
 
-              <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
-                <span className="text-slate-400">Step 2: Leads</span>
-                <span className="text-white">
-                  {formatNumber(outputs.expectedTraffic)} Visitors × {inputs.landingPageConversionRate}% CVR = <strong>{formatNumber(outputs.leads, 1)} Leads</strong>
-                </span>
-              </div>
+                <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
+                  <span className="text-slate-400">Step 2: Leads</span>
+                  <span className="text-white">
+                    {formatNumber(outputs.expectedTraffic)} Visitors × {inputs.landingPageConversionRate}% CVR = <strong>{formatNumber(outputs.leads, 1)} Leads</strong>
+                  </span>
+                </div>
 
-              <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
-                <span className="text-slate-400">Step 3: Calls</span>
-                <span className="text-white">
-                  {formatNumber(outputs.leads, 1)} Leads × {inputs.leadQualificationRate}% Qual = <strong>{formatNumber(outputs.qualifiedLeads, 1)} Calls</strong>
-                </span>
-              </div>
+                <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
+                  <span className="text-slate-400">Step 3: Calls</span>
+                  <span className="text-white">
+                    {formatNumber(outputs.leads, 1)} Leads × {inputs.leadQualificationRate}% Qual = <strong>{formatNumber(outputs.qualifiedLeads, 1)} Calls</strong>
+                  </span>
+                </div>
 
-              <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
-                <span className="text-slate-400">Step 4: Clients</span>
-                <span className="text-white">
-                  {formatNumber(outputs.qualifiedLeads, 1)} Calls × {inputs.salesConversionRate}% Close = <strong>{formatNumber(outputs.customers, 1)} Clients</strong>
-                </span>
-              </div>
+                <div className="flex items-center justify-between p-2 rounded bg-slate-800/60">
+                  <span className="text-slate-400">Step 4: Clients</span>
+                  <span className="text-white">
+                    {formatNumber(outputs.qualifiedLeads, 1)} Calls × {inputs.salesConversionRate}% Close = <strong>{formatNumber(outputs.customers, 1)} Clients</strong>
+                  </span>
+                </div>
 
-              <div className="flex items-center justify-between p-2 rounded bg-[#00B69B]/10 border border-[#00B69B]/30 text-[#00B69B] font-bold">
-                <span>Final Revenue:</span>
-                <span>
-                  {formatNumber(outputs.customers, 1)} Clients × {fmt(inputs.averageDealSize)} = {fmt(outputs.revenue, 0)} ({formatMultiplier(outputs.roas, 2)} ROAS)
-                </span>
+                <div className="flex items-center justify-between p-2 rounded bg-[#00B69B]/10 border border-[#00B69B]/30 text-[#00B69B] font-bold">
+                  <span>Final Revenue:</span>
+                  <span>
+                    {formatNumber(outputs.customers, 1)} Clients × {fmt(inputs.averageDealSize)} = {fmt(outputs.revenue, 0)} ({formatMultiplier(outputs.roas, 2)} ROAS)
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 text-center rounded-lg bg-slate-800/50 border border-slate-700/60 text-xs text-slate-300 space-y-1">
+                <p className="font-semibold text-white">Select your Industry and Ad Platform in the main calculator.</p>
+                <p className="text-[11px] text-slate-400">Once selected, this live mathematical proof automatically updates step-by-step with exact arithmetic.</p>
+              </div>
+            )}
           </div>
 
           {/* Section 3: Where Benchmark Numbers Come From */}

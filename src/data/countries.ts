@@ -227,8 +227,10 @@ export const COUNTRIES: CountryConfig[] = [
 
 export const DEFAULT_COUNTRY_CODE = 'US';
 
-export function getCountry(code?: string): CountryConfig {
-  if (!code) return COUNTRIES[0];
+export function getCountry(codeOrObj?: string | { code?: string }): CountryConfig {
+  if (!codeOrObj) return COUNTRIES[0];
+  const code = typeof codeOrObj === 'string' ? codeOrObj : codeOrObj.code;
+  if (!code || typeof code !== 'string') return COUNTRIES[0];
   const found = COUNTRIES.find((c) => c.code.toUpperCase() === code.toUpperCase());
   return found || COUNTRIES[0];
 }
