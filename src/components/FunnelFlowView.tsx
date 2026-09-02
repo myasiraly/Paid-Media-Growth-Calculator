@@ -832,18 +832,14 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => onApplyScenario ? onApplyScenario(conservativeInputs) : null}
-                className="w-full py-1.5 px-3 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 transition-colors cursor-pointer text-center"
-              >
-                Apply Conservative Model
-              </button>
+              <div className="w-full py-1.5 px-3 bg-slate-100 text-slate-500 text-xs font-semibold rounded-lg text-center border border-slate-200">
+                Stress-Test Reference
+              </div>
             </div>
           </div>
 
           {/* 2. Realistic (Base Target) */}
-          <div className="border-2 border-[#00B69B] rounded-xl p-4 bg-[#00B69B]/5 hover:bg-[#00B69B]/10 transition-all flex flex-col justify-between shadow-xs">
+          <div className="border-2 border-[#00B69B] rounded-xl p-4 bg-[#00B69B]/5 flex flex-col justify-between shadow-xs">
             <div>
               <div className="flex items-center justify-between gap-1 mb-2">
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -899,13 +895,13 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
 
             <div className="mt-4 pt-3 border-t border-[#00B69B]/20">
               <div className="w-full py-1.5 px-3 bg-[#00B69B] text-white text-xs font-bold rounded-lg text-center shadow-2xs">
-                ✓ Currently Selected
+                ✓ Current Active Calculations
               </div>
             </div>
           </div>
 
           {/* 3. Optimized (Upside Case) */}
-          <div className="border border-slate-200 rounded-xl p-4 bg-[#20223A] text-white hover:border-slate-700 transition-all flex flex-col justify-between shadow-xs">
+          <div className="border border-slate-200 rounded-xl p-4 bg-[#20223A] text-white flex flex-col justify-between shadow-xs">
             <div>
               <div className="flex items-center justify-between gap-1 mb-2">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -960,13 +956,9 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-700">
-              <button
-                type="button"
-                onClick={() => onApplyScenario ? onApplyScenario(optimizedInputs) : null}
-                className="w-full py-1.5 px-3 bg-[#00B69B] hover:bg-[#00927C] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center shadow-2xs"
-              >
-                Apply Optimized Model
-              </button>
+              <div className="w-full py-1.5 px-3 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg text-center border border-slate-700">
+                CRO Upside Projection
+              </div>
             </div>
           </div>
 

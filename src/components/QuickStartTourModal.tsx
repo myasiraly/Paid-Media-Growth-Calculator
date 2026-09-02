@@ -46,7 +46,7 @@ export const QuickStartTourModal: React.FC<QuickStartTourModalProps> = ({
       if (e.key === 'Escape') {
         handleComplete();
       } else if (e.key === 'ArrowRight') {
-        if (currentSlide < 2) setCurrentSlide((prev) => prev + 1);
+        if (currentSlide < slides.length - 1) setCurrentSlide((prev) => prev + 1);
       } else if (e.key === 'ArrowLeft') {
         if (currentSlide > 0) setCurrentSlide((prev) => prev - 1);
       }
@@ -71,7 +71,42 @@ export const QuickStartTourModal: React.FC<QuickStartTourModalProps> = ({
 
   const slides = [
     {
-      step: 'Step 1 of 3',
+      step: 'Step 1 of 4',
+      badge: 'Required Inputs',
+      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+      title: 'What Is Required to See the Results',
+      tagline: 'To generate accurate projections, only 3 primary inputs are needed in the Guided 3-Step Setup:',
+      description:
+        'Once you provide these 3 essentials, the calculator immediately generates full-funnel economics, ROI, and client acquisition numbers.',
+      isRequirementsTable: true,
+      tableData: [
+        {
+          step: '1. Your Industry',
+          icon: Building2,
+          stepColor: 'bg-[#00B69B] text-white',
+          requiredInput: 'Select your industry preset (e.g. Plumbing & Drain Services, Legal, Dental, SaaS, Real Estate, etc.)',
+          whyItMatters: 'Sets verified baseline CPCs, lead conversion rates, and typical sales close rates.',
+        },
+        {
+          step: '2. Ad Platform',
+          icon: Target,
+          stepColor: 'bg-[#00B69B] text-white',
+          requiredInput: 'Choose where ads will run (e.g. Google Ads, Meta Ads, LinkedIn, TikTok, etc.)',
+          whyItMatters: 'Adjusts intent level (search vs. social vs. B2B) and platform-specific traffic costs.',
+        },
+        {
+          step: '3. Budget & Deal Size',
+          icon: DollarSign,
+          stepColor: 'bg-[#00B69B] text-white',
+          requiredInput: '1. Monthly Ad Budget (e.g. $1,000/mo)\n2. Average Customer Value / Deal Size (e.g. $2,200)',
+          whyItMatters: 'Defines campaign investment and the revenue generated per closed sale.',
+        },
+      ],
+      optionalNote: '(Optional) You can switch to the Expert Tuner tab at any time to customize individual granular rates like Click-Through Rate (CTR), Landing Page Conversion Rate, Qualification Rate, or Sales Close Rate.',
+      proTip: 'Pro Tip: Starting with your industry and platform presets gives you instant benchmark accuracy in under 10 seconds.',
+    },
+    {
+      step: 'Step 2 of 4',
       badge: 'Groundwork & Benchmarks',
       badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
       title: 'Establish Instant Market Credibility',
@@ -98,7 +133,7 @@ export const QuickStartTourModal: React.FC<QuickStartTourModalProps> = ({
       proTip: 'Sales Tip: Never pitch ad spend without verified industry CPCs. It immediately disarms pricing skepticism.',
     },
     {
-      step: 'Step 2 of 3',
+      step: 'Step 3 of 4',
       badge: 'The 4-Step Funnel Journey',
       badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       title: 'Walk the Client from Click to Cash',
@@ -130,7 +165,7 @@ export const QuickStartTourModal: React.FC<QuickStartTourModalProps> = ({
       proTip: 'Sales Tip: When prospects specify their own close rate and deal size, they take psychological ownership of the revenue projection.',
     },
     {
-      step: 'Step 3 of 3',
+      step: 'Step 4 of 4',
       badge: 'Closing the Deal',
       badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
       title: 'De-Risk Decisions & Close with Confidence',
@@ -219,7 +254,13 @@ export const QuickStartTourModal: React.FC<QuickStartTourModalProps> = ({
               >
                 <span>{idx + 1}</span>
                 <span className="hidden sm:inline">
-                  {idx === 0 ? 'Benchmarks' : idx === 1 ? '4-Step Funnel' : 'Closing Deals'}
+                  {idx === 0
+                    ? 'Requirements'
+                    : idx === 1
+                    ? 'Benchmarks'
+                    : idx === 2
+                    ? '4-Step Funnel'
+                    : 'Closing Deals'}
                 </span>
                 {currentSlide > idx && <CheckCircle2 className="w-3 h-3 text-emerald-700" />}
               </button>
@@ -254,30 +295,88 @@ export const QuickStartTourModal: React.FC<QuickStartTourModalProps> = ({
             </p>
           </div>
 
-          {/* 3 or 4 Feature Highlights */}
-          <div className={`grid gap-2.5 ${currentSlide === 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'}`}>
-            {current.highlights.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div 
-                  key={idx}
-                  className="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 transition-colors flex flex-col justify-between space-y-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-white border border-slate-200 text-[#00B69B] shrink-0 shadow-2xs">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <h5 className="text-xs font-bold text-slate-900 leading-tight">
-                      {item.title}
-                    </h5>
+          {/* Slide 1: Requirements Table */}
+          {current.isRequirementsTable && current.tableData ? (
+            <div className="space-y-3">
+              <div className="overflow-hidden border border-slate-200 rounded-xl bg-white shadow-2xs">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100/90 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      <th className="py-2.5 px-3.5 w-36">Step</th>
+                      <th className="py-2.5 px-3.5">Required Input</th>
+                      <th className="py-2.5 px-3.5">Why It Matters</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-150 text-xs">
+                    {current.tableData.map((row, idx) => {
+                      const Icon = row.icon;
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3 px-3.5 font-bold text-slate-900 align-top">
+                            <div className="flex items-center gap-1.5">
+                              <span className="p-1 rounded-md bg-[#00B69B]/10 text-[#00927C] shrink-0">
+                                <Icon className="w-3.5 h-3.5" />
+                              </span>
+                              <span className="whitespace-nowrap">{row.step}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3.5 text-slate-700 align-top">
+                            <div className="whitespace-pre-line leading-relaxed font-medium">
+                              {row.requiredInput}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3.5 text-slate-600 align-top leading-relaxed">
+                            {row.whyItMatters}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Optional note about Expert Tuner */}
+              {current.optionalNote && (
+                <div className="p-3 rounded-xl bg-slate-100/80 border border-slate-200/90 text-xs text-slate-700 flex items-start gap-2.5">
+                  <div className="p-1 rounded bg-[#00B69B] text-white shrink-0 mt-0.5">
+                    <Sliders className="w-3.5 h-3.5" />
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    {item.desc}
+                  <p className="leading-relaxed">
+                    <strong className="text-slate-900 font-semibold">(Optional)</strong> You can switch to the{' '}
+                    <span className="font-bold text-[#00927C] bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">
+                      Expert Tuner
+                    </span>{' '}
+                    tab at any time to customize individual granular rates like Click-Through Rate (CTR), Landing Page Conversion Rate, Qualification Rate, or Sales Close Rate.
                   </p>
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          ) : (
+            /* Standard 3 or 4 Feature Highlights */
+            <div className={`grid gap-2.5 ${currentSlide === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'}`}>
+              {current.highlights?.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div 
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 transition-colors flex flex-col justify-between space-y-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-white border border-slate-200 text-[#00B69B] shrink-0 shadow-2xs">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-900 leading-tight">
+                        {item.title}
+                      </h5>
+                    </div>
+                    <p className="text-[11px] text-slate-600 leading-snug">
+                      {item.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Pro Sales Tip callout */}
           <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex items-start gap-3">

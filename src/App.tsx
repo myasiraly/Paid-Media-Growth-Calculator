@@ -40,6 +40,7 @@ import { MethodologyExplainerModal } from './components/MethodologyExplainerModa
 import { QuickStartTourModal } from './components/QuickStartTourModal';
 import { PdfReportModal } from './components/PdfReportModal';
 import { GrowthTipSidebar } from './components/GrowthTipSidebar';
+import { BreakevenTimelineCard } from './components/BreakevenTimelineCard';
 import { GHLArmyLogo } from './components/GHLArmyLogo';
 
 const DEFAULT_INPUTS: FunnelInputs = {
@@ -421,6 +422,8 @@ export default function App() {
               )}
             </div>
 
+            {/* Time to Breakeven & Payback Timeline Card */}
+            <BreakevenTimelineCard inputs={inputs} outputs={outputs} />
           </div>
 
         </div>
