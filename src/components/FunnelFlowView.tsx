@@ -228,7 +228,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
         )}
       </div>
 
-      {/* STAGE 1: Website Visitors (Traffic) */}
+      {/* STEP 1: Budget & Traffic */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all hover:border-slate-300 space-y-4">
         
         {/* Header */}
@@ -240,18 +240,18 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-slate-900">
-                  Stage 1: Website Visitors (Ad Clicks)
+                  Step 1: Budget & Traffic
                 </h4>
                 <MetricTooltip metricKey="monthlyAdSpend" />
               </div>
               <p className="text-xs text-slate-500">
-                People actively searching or browsing who click your {currentPlatform?.name || 'online'} ad
+                Monthly ad spend and targeted website clicks from your {currentPlatform?.name || 'online'} campaign
               </p>
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Stage 1 Output</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Step 1 Output</span>
             <span className="text-lg font-black font-mono text-slate-900">
               {isCalculable ? (
                 <span>~{formatNumber(outputs.expectedTraffic)} <span className="text-xs font-medium text-slate-500">Visitors / mo</span></span>
@@ -358,7 +358,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
         </div>
       </div>
 
-      {/* STAGE 2: Inquiries & Leads */}
+      {/* STEP 2: Leads & CVR */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all hover:border-slate-300 space-y-4">
         
         {/* Header */}
@@ -370,18 +370,18 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-slate-900">
-                  Stage 2: Inquiries & Quote Requests (Leads)
+                  Step 2: Leads & CVR
                 </h4>
                 <MetricTooltip metricKey="landingPageConversionRate" />
               </div>
               <p className="text-xs text-slate-500">
-                Visitors who submit a form, schedule a consultation, or call your office
+                Landing page conversion rate and inbound inquiries generated from traffic
               </p>
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Stage 2 Output</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Step 2 Output</span>
             <span className="text-lg font-black font-mono text-slate-900">
               {isCalculable ? (
                 <span>~{formatNumber(outputs.leads, 1)} <span className="text-xs font-medium text-slate-500">Leads / mo</span></span>
@@ -485,7 +485,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
         </div>
       </div>
 
-      {/* STAGE 3: Sales Discovery Calls */}
+      {/* STEP 3: Sales Pipeline */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all hover:border-slate-300 space-y-4">
         
         {/* Header */}
@@ -497,18 +497,18 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-slate-900">
-                  Stage 3: Sales Discovery & Consultation Calls
+                  Step 3: Sales Pipeline
                 </h4>
                 <MetricTooltip metricKey="leadQualificationRate" />
               </div>
               <p className="text-xs text-slate-500">
-                Qualified prospects with real budget, right location, and active need
+                Lead qualification rate and discovery consultation calls booked with real buyers
               </p>
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Stage 3 Output</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Step 3 Output</span>
             <span className="text-lg font-black font-mono text-slate-900">
               {isCalculable ? (
                 <span>~{formatNumber(outputs.qualifiedLeads, 1)} <span className="text-xs font-medium text-slate-500">Sales Calls / mo</span></span>
@@ -612,7 +612,7 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
         </div>
       </div>
 
-      {/* STAGE 4: Closed Clients & Revenue */}
+      {/* STEP 4: Revenue & ROAS */}
       <div className="bg-white border-2 border-[#00B69B]/40 rounded-2xl p-5 shadow-sm space-y-4">
         
         {/* Header */}
@@ -624,18 +624,18 @@ export const FunnelFlowView: React.FC<FunnelFlowViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-slate-900">
-                  Stage 4: Closed Paying Clients & Total Revenue
+                  Step 4: Revenue & ROAS
                 </h4>
                 <MetricTooltip metricKey="customers" />
               </div>
               <p className="text-xs text-slate-500">
-                Your sales close rate and average customer ticket size
+                Sales close rate, new paying clients won, gross revenue, and campaign return
               </p>
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <span className="text-[11px] font-semibold text-[#00927C] uppercase tracking-wider block">Final Revenue</span>
+            <span className="text-[11px] font-semibold text-[#00927C] uppercase tracking-wider block">Step 4 Output</span>
             <span className="text-lg font-black font-mono text-[#00B69B]">
               {isCalculable ? (
                 <span>{fmt(outputs.revenue, 0)} <span className="text-xs font-bold text-slate-700">({formatMultiplier(outputs.roas, 1)} ROAS)</span></span>

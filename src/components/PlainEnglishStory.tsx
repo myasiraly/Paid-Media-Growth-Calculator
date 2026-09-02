@@ -83,13 +83,13 @@ export const PlainEnglishStory: React.FC<PlainEnglishStoryProps> = ({
       {/* Visual Step-by-Step Breakdown */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
         
-        {/* Step 1: Website Visitors */}
+        {/* Step 1: Budget & Traffic */}
         <div className="bg-slate-900/60 rounded-xl p-3 border border-slate-800 space-y-1.5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
               <span className="flex items-center gap-1.5 text-slate-200 font-bold">
                 <span className="w-4 h-4 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px]">1</span>
-                <span>Website Visitors</span>
+                <span>Budget & Traffic</span>
               </span>
               <Users className="w-3.5 h-3.5 text-slate-400" />
             </div>
@@ -102,13 +102,13 @@ export const PlainEnglishStory: React.FC<PlainEnglishStoryProps> = ({
           </div>
         </div>
 
-        {/* Step 2: Inquiries & Leads */}
+        {/* Step 2: Leads & CVR */}
         <div className="bg-slate-900/60 rounded-xl p-3 border border-slate-800 space-y-1.5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
               <span className="flex items-center gap-1.5 text-slate-200 font-bold">
                 <span className="w-4 h-4 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px]">2</span>
-                <span>Inquiries (Leads)</span>
+                <span>Leads & CVR</span>
               </span>
               <MessageSquare className="w-3.5 h-3.5 text-[#00B69B]" />
             </div>
@@ -121,13 +121,13 @@ export const PlainEnglishStory: React.FC<PlainEnglishStoryProps> = ({
           </div>
         </div>
 
-        {/* Step 3: Sales Calls */}
+        {/* Step 3: Sales Pipeline */}
         <div className="bg-slate-900/60 rounded-xl p-3 border border-slate-800 space-y-1.5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
               <span className="flex items-center gap-1.5 text-slate-200 font-bold">
                 <span className="w-4 h-4 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px]">3</span>
-                <span>Sales Discovery Calls</span>
+                <span>Sales Pipeline</span>
               </span>
               <PhoneCall className="w-3.5 h-3.5 text-amber-400" />
             </div>
@@ -140,13 +140,13 @@ export const PlainEnglishStory: React.FC<PlainEnglishStoryProps> = ({
           </div>
         </div>
 
-        {/* Step 4: Closed Deals & Revenue */}
+        {/* Step 4: Revenue & ROAS */}
         <div className="bg-gradient-to-br from-slate-900 to-[#181a30] rounded-xl p-3 border border-[#00B69B]/40 space-y-1.5 flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between text-[11px] text-[#00B69B] font-medium">
               <span className="flex items-center gap-1.5 text-white font-bold">
                 <span className="w-4 h-4 rounded-full bg-[#00B69B] text-white flex items-center justify-center text-[10px]">4</span>
-                <span>Paying Clients Won</span>
+                <span>Revenue & ROAS</span>
               </span>
               <Trophy className="w-3.5 h-3.5 text-[#C59A27]" />
             </div>

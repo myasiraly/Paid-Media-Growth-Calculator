@@ -243,11 +243,11 @@ export const SummaryMetricsGrid: React.FC<SummaryMetricsGridProps> = ({
           </div>
         ) : inputs.monthlyAdSpend === 0 ? (
           <p className="text-sm text-slate-200 leading-relaxed">
-            Enter your monthly ad spend in <strong className="text-[#00B69B]">Stage 1</strong> to project website visitors, inquiries, qualified sales calls, and revenue for <strong className="text-white">{currentPlatform?.name}</strong> in <strong className="text-white">{inputs.industry}</strong>.
+            Enter your monthly ad spend in <strong className="text-[#00B69B]">Step 1 (Budget & Traffic)</strong> to project website visitors, inquiries, qualified sales calls, and revenue for <strong className="text-white">{currentPlatform?.name}</strong> in <strong className="text-white">{inputs.industry}</strong>.
           </p>
         ) : (
           <p className="text-sm text-slate-200 leading-relaxed">
-            For every <strong className="text-white">{currentCountry.currencySymbol}1.00</strong> you spend on <strong className="text-white">{currentPlatform?.name}</strong> ads in <strong className="text-white">{inputs.industry}</strong>, you generate <strong className="text-[#00B69B]">{fmt(outputs.roas, 2).replace(currentCountry.currencySymbol, '')}</strong> in gross revenue.
+            For every <strong className="text-white">{currentCountry.currencySymbol}1.00</strong> you spend on <strong className="text-white">{currentPlatform?.name}</strong> ads in <strong className="text-white">{inputs.industry}</strong>, you generate <strong className="text-[#00B69B]">{fmt(outputs.roas, 2)}</strong> in gross revenue (<strong className="text-[#00B69B]">{formatMultiplier(outputs.roas, 2)} ROAS</strong>).
           </p>
         )}
 
@@ -307,24 +307,24 @@ export const SummaryMetricsGrid: React.FC<SummaryMetricsGridProps> = ({
               Exact Arithmetic Chain (100% Deterministic):
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>1. Visitors:</span>
-              <span className="text-slate-200">{fmt(inputs.monthlyAdSpend)} ÷ {fmt(inputs.expectedCpc, 2)} = <strong>{formatNumber(outputs.expectedTraffic)}</strong></span>
+              <span>Step 1 (Budget & Traffic):</span>
+              <span className="text-slate-200">{fmt(inputs.monthlyAdSpend)} ÷ {fmt(inputs.expectedCpc, 2)} = <strong>{formatNumber(outputs.expectedTraffic)} clicks</strong></span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>2. Leads:</span>
-              <span className="text-slate-200">{formatNumber(outputs.expectedTraffic)} × {inputs.landingPageConversionRate}% = <strong>{formatNumber(outputs.leads, 1)}</strong></span>
+              <span>Step 2 (Leads & CVR):</span>
+              <span className="text-slate-200">{formatNumber(outputs.expectedTraffic)} × {inputs.landingPageConversionRate}% = <strong>{formatNumber(outputs.leads, 1)} leads</strong></span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>3. Qualified Calls:</span>
-              <span className="text-slate-200">{formatNumber(outputs.leads, 1)} × {inputs.leadQualificationRate}% = <strong>{formatNumber(outputs.qualifiedLeads, 1)}</strong></span>
+              <span>Step 3 (Sales Pipeline):</span>
+              <span className="text-slate-200">{formatNumber(outputs.leads, 1)} × {inputs.leadQualificationRate}% = <strong>{formatNumber(outputs.qualifiedLeads, 1)} calls</strong></span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>4. Closed Clients:</span>
-              <span className="text-slate-200">{formatNumber(outputs.qualifiedLeads, 1)} × {inputs.salesConversionRate}% = <strong>{formatNumber(outputs.customers, 1)}</strong></span>
+              <span>Step 4 (Revenue & ROAS):</span>
+              <span className="text-slate-200">{formatNumber(outputs.qualifiedLeads, 1)} × {inputs.salesConversionRate}% = <strong>{formatNumber(outputs.customers, 1)} clients</strong></span>
             </div>
             <div className="flex justify-between pt-1 border-t border-slate-800 text-[#00B69B] font-bold">
-              <span>5. Gross Revenue:</span>
-              <span>{formatNumber(outputs.customers, 1)} × {fmt(inputs.averageDealSize)} = {fmt(outputs.revenue, 0)}</span>
+              <span>Gross Revenue & ROAS:</span>
+              <span>{formatNumber(outputs.customers, 1)} clients × {fmt(inputs.averageDealSize)} = {fmt(outputs.revenue, 0)} ({formatMultiplier(outputs.roas, 2)} ROAS)</span>
             </div>
           </div>
         )}

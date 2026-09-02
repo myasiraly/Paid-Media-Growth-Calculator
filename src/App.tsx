@@ -37,6 +37,8 @@ import { BenchmarkReferenceModal } from './components/BenchmarkReferenceModal';
 import { CountryComparisonModal } from './components/CountryComparisonModal';
 import { AdPlatformComparisonModal } from './components/AdPlatformComparisonModal';
 import { MethodologyExplainerModal } from './components/MethodologyExplainerModal';
+import { QuickStartTourModal } from './components/QuickStartTourModal';
+import { PdfReportModal } from './components/PdfReportModal';
 import { GrowthTipSidebar } from './components/GrowthTipSidebar';
 import { GHLArmyLogo } from './components/GHLArmyLogo';
 
@@ -53,8 +55,8 @@ const DEFAULT_INPUTS: FunnelInputs = {
   channel: '',
   countryCode: 'US',
   platformId: undefined,
-  targetGoalType: undefined,
-  targetGoalValue: undefined,
+  targetGoalType: 'customers',
+  targetGoalValue: 10,
 };
 
 export default function App() {
@@ -72,10 +74,28 @@ export default function App() {
   const [isGoalSeekerOpen, setIsGoalSeekerOpen] = useState(false);
   const [isScenariosOpen, setIsScenariosOpen] = useState(false);
   const [isPitchModalOpen, setIsPitchModalOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [isMethodologyModalOpen, setIsMethodologyModalOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  // Auto-launch Quick Start Tour on first visit
+  useEffect(() => {
+    try {
+      const hasSeenTour = localStorage.getItem('has_seen_quickstart_tour');
+      if (!hasSeenTour) {
+        // Small delay to let initial layout mount smoothly
+        const timer = setTimeout(() => {
+          setIsTourOpen(true);
+        }, 400);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Save to local storage and update URL hash on change
   useEffect(() => {
@@ -238,6 +258,8 @@ export default function App() {
         inputs={inputs}
         onSelectPreset={handleSelectPreset}
         onReset={handleReset}
+        onOpenQuickStartTour={() => setIsTourOpen(true)}
+        onOpenPdfModal={() => setIsPdfModalOpen(true)}
         onOpenMethodologyModal={() => setIsMethodologyModalOpen(true)}
         onOpenPitchModal={() => setIsPitchModalOpen(true)}
         onOpenBenchmarkModal={() => setIsBenchmarkModalOpen(true)}
@@ -465,6 +487,25 @@ export default function App() {
         outputs={outputs}
         isOpen={isMethodologyModalOpen}
         onClose={() => setIsMethodologyModalOpen(false)}
+      />
+
+      {/* Quick Start Sales Tour Modal */}
+      <QuickStartTourModal
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onSelectIndustryClick={() => {
+          setIsTourOpen(false);
+          setIsBenchmarkModalOpen(true);
+        }}
+      />
+
+      {/* PDF Client Report & Presentation Modal */}
+      <PdfReportModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        inputs={inputs}
+        outputs={outputs}
+        onChangeInput={handleInputChange}
       />
     </div>
   );

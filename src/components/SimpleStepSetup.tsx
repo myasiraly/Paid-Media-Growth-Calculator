@@ -18,7 +18,7 @@ import { FunnelInputs, PlatformId } from '../types';
 import { getCountry } from '../data/countries';
 import { AD_PLATFORMS, getPlatform } from '../data/platforms';
 import { INDUSTRY_BENCHMARKS, getBenchmarkCategories, findBenchmark } from '../data/benchmarks';
-import { formatCurrency } from '../utils/calculations';
+import { formatCurrency, calculateRequiredSpend } from '../utils/calculations';
 
 interface SimpleStepSetupProps {
   inputs: FunnelInputs;
@@ -119,42 +119,41 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
       </div>
 
       {/* 3 Step Form Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
         
         {/* Step 1: Industry / Business (MANDATORY) */}
-        <div className={`rounded-xl p-4 space-y-3 flex flex-col justify-between transition-all border ${
+        <div className={`rounded-xl p-4 flex flex-col justify-between transition-all border ${
           !isIndustrySelected 
             ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-300/50' 
             : 'bg-slate-50 border-slate-200'
         }`}>
-          <div>
+          <div className="space-y-3">
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <span className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px] font-black ${
+              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px] font-black shrink-0 ${
                   isIndustrySelected ? 'bg-[#00B69B]' : 'bg-amber-600'
                 }`}>
                   1
                 </span>
                 <span>Your Industry</span>
-                <span className="text-[10px] text-amber-600 font-bold">*Required</span>
-              </span>
+              </div>
               {isIndustrySelected ? (
-                <span className="text-[10px] text-[#00927C] bg-[#00B69B]/10 font-bold px-1.5 py-0.5 rounded border border-[#00B69B]/30 flex items-center gap-1">
+                <span className="text-[10px] text-[#00927C] bg-[#00B69B]/10 font-bold px-2 py-0.5 rounded-full border border-[#00B69B]/30 flex items-center gap-1 shrink-0">
                   <Check className="w-3 h-3" />
                   <span>Selected</span>
                 </span>
               ) : (
-                <span className="text-[10px] text-amber-700 bg-amber-200/80 font-bold px-1.5 py-0.5 rounded animate-pulse">
-                  Choose Industry
+                <span className="text-[10px] text-amber-700 bg-amber-200/80 font-bold px-2 py-0.5 rounded-full animate-pulse shrink-0">
+                  *Required
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 mb-2">
+            <p className="text-[11px] text-slate-500">
               Sets verified industry CPCs, lead rates & deal sizes.
             </p>
 
             {/* Quick Industry Chips */}
-            <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+            <div className="grid grid-cols-2 gap-1.5">
               {popularIndustries.map((ind) => {
                 const targetBench = findBenchmark(ind.id);
                 const isSelected = isIndustrySelected && (
@@ -167,14 +166,15 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
                     key={ind.id}
                     type="button"
                     onClick={() => onSelectPreset(ind.id)}
-                    className={`p-1.5 rounded-lg text-left text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${
+                    className={`px-2 py-1.5 rounded-lg text-left text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-[#00B69B] text-white border-[#00B69B] shadow-2xs font-bold'
                         : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                     }`}
+                    title={`Select ${ind.label}`}
                   >
                     <span className="text-xs shrink-0">{ind.icon}</span>
-                    <span className="truncate">{ind.label}</span>
+                    <span className="truncate text-[11px]">{ind.label}</span>
                   </button>
                 );
               })}
@@ -203,7 +203,7 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
           <button
             type="button"
             onClick={onOpenBenchmarkModal}
-            className="text-[11px] text-[#00927C] hover:underline font-bold flex items-center justify-between pt-1 border-t border-slate-200/80 cursor-pointer"
+            className="text-xs text-[#00927C] hover:underline font-bold flex items-center justify-between pt-2.5 mt-2.5 border-t border-slate-200/80 cursor-pointer h-7"
           >
             <span>Browse all 60+ industry profiles</span>
             <span>→</span>
@@ -211,39 +211,38 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
         </div>
 
         {/* Step 2: Ad Platform (MANDATORY) */}
-        <div className={`rounded-xl p-4 space-y-3 flex flex-col justify-between transition-all border ${
+        <div className={`rounded-xl p-4 flex flex-col justify-between transition-all border ${
           !isPlatformSelected 
             ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-300/50' 
             : 'bg-slate-50 border-slate-200'
         }`}>
-          <div>
+          <div className="space-y-3">
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <span className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px] font-black ${
+              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px] font-black shrink-0 ${
                   isPlatformSelected ? 'bg-[#00B69B]' : 'bg-amber-600'
                 }`}>
                   2
                 </span>
                 <span>Ad Platform</span>
-                <span className="text-[10px] text-amber-600 font-bold">*Required</span>
-              </span>
+              </div>
               {isPlatformSelected ? (
-                <span className="text-[10px] text-[#00927C] bg-[#00B69B]/10 font-bold px-1.5 py-0.5 rounded border border-[#00B69B]/30 flex items-center gap-1">
+                <span className="text-[10px] text-[#00927C] bg-[#00B69B]/10 font-bold px-2 py-0.5 rounded-full border border-[#00B69B]/30 flex items-center gap-1 shrink-0">
                   <Check className="w-3 h-3" />
-                  <span>{getPlatform(inputs.platformId!).shortName}</span>
+                  <span>Selected</span>
                 </span>
               ) : (
-                <span className="text-[10px] text-amber-700 bg-amber-200/80 font-bold px-1.5 py-0.5 rounded animate-pulse">
-                  Choose Platform
+                <span className="text-[10px] text-amber-700 bg-amber-200/80 font-bold px-2 py-0.5 rounded-full animate-pulse shrink-0">
+                  *Required
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 mb-2">
+            <p className="text-[11px] text-slate-500">
               Select where ads run (Search vs Social vs B2B intent).
             </p>
 
             {/* Platform Selection Cards */}
-            <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+            <div className="grid grid-cols-2 gap-1.5">
               {AD_PLATFORMS.map((plat) => {
                 const isSelected = inputs.platformId === plat.id;
                 return (
@@ -262,10 +261,10 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: plat.brandColor }}
                       />
-                      <span className="font-bold truncate">{plat.name}</span>
+                      <span className="font-bold truncate text-[11px]">{plat.name}</span>
                     </div>
-                    <div className={`text-[10px] mt-1 line-clamp-1 ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
-                      {plat.audienceIntent}
+                    <div className={`text-[10px] mt-0.5 truncate ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
+                      {plat.shortName}
                     </div>
                   </button>
                 );
@@ -276,7 +275,7 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
           <button
             type="button"
             onClick={onOpenPlatformModal}
-            className="text-[11px] text-[#00927C] hover:underline font-bold flex items-center justify-between pt-1 border-t border-slate-200/80 cursor-pointer"
+            className="text-xs text-[#00927C] hover:underline font-bold flex items-center justify-between pt-2.5 mt-2.5 border-t border-slate-200/80 cursor-pointer h-7"
           >
             <span>Compare all 6 platforms side-by-side</span>
             <span>→</span>
@@ -284,23 +283,23 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
         </div>
 
         {/* Step 3: Budget & Deal Size */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 flex flex-col justify-between">
-          <div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+          <div className="space-y-3">
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-[#00B69B] text-white flex items-center justify-center text-[10px] font-black">3</span>
-                <span>Budget & Customer Value</span>
-              </span>
-              <span className="text-[10px] font-mono text-slate-500 font-bold">
+              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#00B69B] text-white flex items-center justify-center text-[10px] font-black shrink-0">3</span>
+                <span>Budget & Deal Size</span>
+              </div>
+              <span className="text-xs font-mono text-[#00927C] font-bold">
                 {fmt(inputs.monthlyAdSpend)}/mo
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 mb-2">
+            <p className="text-[11px] text-slate-500">
               Set how much you spend and what 1 paying customer is worth.
             </p>
 
-            {/* Monthly Ad Budget */}
-            <div className="space-y-1 mb-3">
+            {/* Monthly Ad Budget Slider */}
+            <div className="space-y-1">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-700">Monthly Ad Budget</span>
                 <span className="font-mono font-bold text-[#00927C]">{fmt(inputs.monthlyAdSpend)}</span>
@@ -339,23 +338,133 @@ export const SimpleStepSetup: React.FC<SimpleStepSetupProps> = ({
                   step="100"
                   value={inputs.averageDealSize || ''}
                   onChange={(e) => onChangeInput('averageDealSize', Math.max(1, Number(e.target.value)))}
-                  placeholder="e.g. 4500"
+                  placeholder="e.g. 2500"
                   className="w-full pl-7 pr-3 py-1.5 text-right font-mono font-bold text-slate-900 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#00B69B] focus:outline-none"
                 />
               </div>
-              <p className="text-[10px] text-slate-400">
-                What 1 closed client or sale pays your business.
-              </p>
+            </div>
+
+            {/* Growth Target Goal (Editable Client/Mo Goal) */}
+            <div className="pt-2.5 border-t border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                  <Target className="w-3.5 h-3.5 text-[#00B69B]" />
+                  <span>Target Clients / Mo:</span>
+                </div>
+                <span className="text-xs font-bold font-mono text-[#00927C]">
+                  {fmt((inputs.targetGoalValue || 10) * (inputs.averageDealSize || 2500), 0)}/mo target
+                </span>
+              </div>
+
+              {/* Stepper + Presets Row (Flexibly sized to never wrap or squash) */}
+              <div className="flex items-center gap-1.5">
+                {/* Stepper [ - ] [ 10 ] [ + ] */}
+                <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-2xs shrink-0">
+                  <button
+                    id="decrease-target-clients-btn"
+                    type="button"
+                    onClick={() => {
+                      const cur = inputs.targetGoalValue || 10;
+                      onChangeInput('targetGoalType', 'customers');
+                      onChangeInput('targetGoalValue', Math.max(1, cur - 1));
+                    }}
+                    className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors border-r border-slate-200 cursor-pointer"
+                    title="Decrease target clients"
+                  >
+                    -
+                  </button>
+                  <input
+                    id="growth-target-clients-input"
+                    type="number"
+                    min="1"
+                    max="500"
+                    step="1"
+                    value={inputs.targetGoalValue || 10}
+                    onChange={(e) => {
+                      const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                      onChangeInput('targetGoalType', 'customers');
+                      onChangeInput('targetGoalValue', val);
+                    }}
+                    className="w-9 text-center font-mono font-bold text-slate-900 text-xs py-1 focus:outline-none bg-transparent"
+                    placeholder="10"
+                  />
+                  <button
+                    id="increase-target-clients-btn"
+                    type="button"
+                    onClick={() => {
+                      const cur = inputs.targetGoalValue || 10;
+                      onChangeInput('targetGoalType', 'customers');
+                      onChangeInput('targetGoalValue', cur + 1);
+                    }}
+                    className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors border-l border-slate-200 cursor-pointer"
+                    title="Increase target clients"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Presets (5, 10, 20, 50) */}
+                <div className="flex items-center gap-1 flex-1">
+                  {[5, 10, 20, 50].map((presetVal) => {
+                    const isCurrent = (inputs.targetGoalValue || 10) === presetVal;
+                    return (
+                      <button
+                        key={presetVal}
+                        type="button"
+                        onClick={() => {
+                          onChangeInput('targetGoalType', 'customers');
+                          onChangeInput('targetGoalValue', presetVal);
+                        }}
+                        className={`flex-1 py-1 text-[11px] font-bold rounded-md border text-center transition-all cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#00B69B] text-white border-[#00B69B] shadow-2xs'
+                            : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                        }`}
+                        title={`Set target to ${presetVal} clients/month`}
+                      >
+                        {presetVal}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Quick 1-click Auto-set Budget for Target if calculable */}
+              {isIndustrySelected && isPlatformSelected && (
+                (() => {
+                  const targetRev = (inputs.targetGoalValue || 10) * Math.max(1, inputs.averageDealSize || 1);
+                  const calc = calculateRequiredSpend(targetRev, inputs);
+                  const reqSpend = Math.round(calc.requiredSpend / 50) * 50;
+                  const isMatching = Math.abs(inputs.monthlyAdSpend - reqSpend) < 50;
+
+                  if (reqSpend > 0 && !isMatching) {
+                    return (
+                      <button
+                        id="apply-target-spend-btn"
+                        type="button"
+                        onClick={() => onChangeInput('monthlyAdSpend', reqSpend)}
+                        className="w-full py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold transition-colors flex items-center justify-between cursor-pointer"
+                        title="Set your monthly budget to the calculated amount needed to hit this target"
+                      >
+                        <span className="text-[11px] flex items-center gap-1">
+                          <span>🎯</span>
+                          <span>Set Spend for {inputs.targetGoalValue || 10} clients:</span>
+                        </span>
+                        <span className="font-mono text-[#00927C] font-black underline shrink-0 ml-1">
+                          {fmt(reqSpend)}/mo →
+                        </span>
+                      </button>
+                    );
+                  }
+                  return null;
+                })()
+              )}
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-600">
-            <span>Growth Target Goal:</span>
-            <span className="font-bold text-[#00927C]">
-              {inputs.targetGoalType === 'revenue' 
-                ? `${fmt(inputs.targetGoalValue || 0, 0)}/mo` 
-                : `${inputs.targetGoalValue || 10} clients/mo`}
-            </span>
+          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2.5 mt-2.5 border-t border-slate-200/80 h-7">
+            <span>Instant Live Recalculation</span>
+            <span className="text-amber-500 font-bold">⚡ Active</span>
           </div>
         </div>
 

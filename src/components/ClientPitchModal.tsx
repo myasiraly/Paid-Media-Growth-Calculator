@@ -19,6 +19,7 @@ import { FunnelInputs, FunnelOutputs } from '../types';
 import { getCountry } from '../data/countries';
 import { getPlatform } from '../data/platforms';
 import { exportFunnelToCsv } from '../utils/exportCsv';
+import { exportFunnelToPdf } from '../utils/exportPdf';
 import { copyShareableLink, getShareableUrl } from '../utils/urlState';
 import { 
   formatCurrency, 
@@ -275,6 +276,15 @@ Let me know if you have any questions on these benchmarks. Looking forward to ou
                   <span>Copy Shareable Link</span>
                 </>
               )}
+            </button>
+            <button
+              id="pitch-modal-download-pdf-btn"
+              type="button"
+              onClick={() => exportFunnelToPdf(inputs, outputs)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#20223A] hover:bg-[#2a2c48] text-white border border-slate-700 transition-colors cursor-pointer shadow-2xs"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#00B69B]" />
+              <span>Download PDF Report</span>
             </button>
             <button
               id="pitch-modal-export-csv-btn"

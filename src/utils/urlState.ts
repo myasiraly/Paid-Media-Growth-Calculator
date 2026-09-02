@@ -13,6 +13,8 @@ export const PARAM_KEYS = {
   channel: 'chan',
   countryCode: 'country',
   platformId: 'plat',
+  targetGoalType: 'gtype',
+  targetGoalValue: 'gval',
 } as const;
 
 /**
@@ -33,6 +35,8 @@ export function encodeInputsToHash(inputs: FunnelInputs): string {
   if (inputs.channel) params.set(PARAM_KEYS.channel, inputs.channel);
   if (inputs.countryCode) params.set(PARAM_KEYS.countryCode, inputs.countryCode);
   if (inputs.platformId) params.set(PARAM_KEYS.platformId, inputs.platformId);
+  if (inputs.targetGoalType) params.set(PARAM_KEYS.targetGoalType, inputs.targetGoalType);
+  if (inputs.targetGoalValue !== undefined) params.set(PARAM_KEYS.targetGoalValue, String(inputs.targetGoalValue));
 
   return params.toString();
 }
@@ -93,6 +97,12 @@ export function decodeInputsFromHash(hashString?: string): Partial<FunnelInputs>
 
     const platform = params.get(PARAM_KEYS.platformId) || params.get('platformId') || params.get('plat');
     if (platform) result.platformId = platform as PlatformId;
+
+    const gtype = params.get(PARAM_KEYS.targetGoalType) || params.get('targetGoalType') || params.get('gtype');
+    if (gtype === 'revenue' || gtype === 'customers') result.targetGoalType = gtype;
+
+    const gval = parseNum(params.get(PARAM_KEYS.targetGoalValue) || params.get('targetGoalValue') || params.get('gval'), 1);
+    if (gval !== undefined) result.targetGoalValue = gval;
 
     return Object.keys(result).length > 0 ? result : null;
   } catch (err) {
